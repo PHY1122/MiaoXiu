@@ -1,0 +1,277 @@
+﻿body {
+    /* 全局样式重置 */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft YaHei", Arial, sans-serif;
+}
+
+body {
+    height: 100vh;
+    overflow: hidden;
+    background-color: #f5f5f5;
+}
+
+/* 顶部标题栏 */
+.header {
+    height: 60px;
+    background-color: #2c5282;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+    .header h1 {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+/* 地图切换按钮 */
+.map-switch-btn {
+    padding: 6px 12px;
+    background-color: white;
+    color: #2c5282;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+    .map-switch-btn:hover {
+        background-color: #e6f7ff;
+    }
+
+/* 主要内容区布局 */
+.main-container {
+    display: flex;
+    height: calc(100vh - 60px);
+}
+
+/* 左侧面板 */
+.left-panel {
+    width: 320px;
+    background-color: white;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    padding: 15px;
+    overflow-y: auto;
+}
+
+/* 搜索框 */
+.search-box {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+    .search-box input {
+        flex: 1;
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px 0 0 4px;
+        outline: none;
+    }
+
+    .search-box button {
+        width: 80px;
+        height: 36px;
+        background-color: #2c5282;
+        color: white;
+        border: none;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .search-box button:hover {
+            background-color: #1a365d;
+        }
+
+/* 苗绣列表 */
+.miaoxiu-list {
+    margin-bottom: 20px;
+}
+
+.miaoxiu-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+    .miaoxiu-item:hover {
+        background-color: #f0f7ff;
+    }
+
+    .miaoxiu-item h3 {
+        font-size: 16px;
+        color: #2c5282;
+        margin-bottom: 5px;
+    }
+
+    .miaoxiu-item p {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.5;
+    }
+
+/* 分页控制 */
+.page-control {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+    .page-control button {
+        padding: 5px 12px;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        background-color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+        .page-control button:disabled {
+            cursor: not-allowed;
+            color: #ccc;
+            border-color: #eee;
+        }
+
+        .page-control button:not(:disabled):hover {
+            background-color: #f0f7ff;
+            border-color: #2c5282;
+            color: #2c5282;
+        }
+
+    .page-control #pageInfo {
+        font-size: 14px;
+        color: #666;
+    }
+
+/* 右侧地图区 */
+.right-map {
+    flex: 1;
+    position: relative;
+}
+
+/* 地图控制按钮 */
+.map-controls {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+}
+
+    .map-controls button {
+        padding: 8px 15px;
+        background-color: white;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+        .map-controls button:hover {
+            background-color: #2c5282;
+            color: white;
+            border-color: #2c5282;
+        }
+
+/* 地图容器 */
+.map-container {
+    width: 100%;
+    height: 100%;
+}
+
+/* 图片弹窗 */
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    position: relative;
+    width: 80%;
+    max-width: 800px;
+}
+
+.modal-img {
+    width: 100%;
+    height: auto;
+    border: 5px solid white;
+}
+
+.close-modal {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.img-nav {
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    transform: translateY(-50%);
+    padding: 0 20px;
+}
+
+    .img-nav button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(255,255,255,0.7);
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.3s;
+    }
+
+        .img-nav button:hover {
+            background-color: white;
+        }
+
+/* 地图卷帘样式 */
+.leaflet-sbs-divider {
+    background-color: #2c5282;
+    width: 4px;
+    cursor: ew-resize;
+}
+
+.leaflet-sbs-handle {
+    background-color: white;
+    border: 2px solid #2c5282;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    margin-top: -10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+    .leaflet-sbs-handle:hover {
+        background-color: #2c5282;
+        border-color: white;
+    }
+
