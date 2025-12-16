@@ -1,0 +1,379 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苗绣流派详情 - 苗绣文化GIS系统</title>
+    <!-- 引入公共依赖 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- 页面样式 -->
+    <style>
+        /* 继承主系统风格，保持统一 */
+        body {
+            margin: 0;
+            font-family: "微软雅黑", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c5282;
+            padding-bottom: 15px;
+        }
+
+            .header h1 {
+                color: #2c5282;
+                margin: 0;
+                font-size: 28px;
+            }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+            .back-btn:hover {
+                background: #1a365d;
+            }
+
+            .back-btn i {
+                margin-right: 8px;
+            }
+
+        /* 流派详情样式 */
+        .school-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .school-location {
+            flex: 1;
+            min-width: 300px;
+        }
+
+            .school-location h3 {
+                color: #2c5282;
+                font-size: 22px;
+                margin: 0 0 15px 0;
+                display: flex;
+                align-items: center;
+            }
+
+                .school-location h3 i {
+                    margin-right: 10px;
+                    color: #4a6fa5;
+                }
+
+            .school-location p {
+                line-height: 1.8;
+                font-size: 16px;
+            }
+
+        .location-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+            .location-btn:hover {
+                background: #2c5282;
+            }
+
+            .location-btn i {
+                margin-right: 8px;
+            }
+
+        .school-photo {
+            width: 400px;
+            height: 250px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        }
+
+            .school-photo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .school-detail, .school-compare {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .detail-title {
+            color: #2c5282;
+            font-size: 20px;
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e8f4f8;
+        }
+
+        .detail-content {
+            line-height: 1.9;
+            font-size: 16px;
+        }
+
+            .detail-content strong {
+                color: #2c5282;
+            }
+
+        /* 流派对比样式 */
+        .compare-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .compare-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .compare-btn {
+            padding: 8px 20px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            .compare-btn:hover {
+                background: #1a365d;
+            }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+            .compare-table th, .compare-table td {
+                padding: 12px 15px;
+                text-align: left;
+                border-bottom: 1px solid #e8f4f8;
+            }
+
+            .compare-table th {
+                background: #f0f7ff;
+                color: #2c5282;
+                font-weight: bold;
+            }
+
+            .compare-table tr:hover {
+                background: #f8f9fa;
+            }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .school-header {
+                flex-direction: column;
+            }
+
+            .school-photo {
+                width: 100%;
+                height: auto;
+            }
+
+            .compare-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa fa-book" aria-hidden="true"></i> 苗绣流派详情</h1>
+            <button class="back-btn" id="backToMap"><i class="fa fa-arrow-left" aria-hidden="true"></i> 返回地图</button>
+        </div>
+
+        <!-- 流派头部信息 -->
+        <div class="school-header">
+            <div class="school-location">
+                <h3><i class="fa fa-map-marker" aria-hidden="true"></i> 黔东南派 · 核心分布区</h3>
+                <p>主要分布在贵州黔东南苗族侗族自治州（雷山县、台江县、剑河县等），是苗绣中最具代表性的流派之一。因黔东南山区相对封闭的地理环境，完整保留了古法刺绣技艺，被誉为“苗绣活化石”。</p>
+                <button class="location-btn" id="locateSchool" data-lat="26.58" data-lng="108.27" data-name="黔东南派核心区">
+                    <i class="fa fa-map" aria-hidden="true"></i> 在地图中定位
+                </button>
+            </div>
+            <div class="school-photo">
+                <img src="images/school/qiandongnan.jpg" alt="黔东南派苗绣代表作" title="黔东南派盛装背扇（贵州省民族博物馆藏）">
+            </div>
+        </div>
+
+        <!-- 流派特色详情 -->
+        <div class="school-detail">
+            <h3 class="detail-title"><i class="fa fa-star" aria-hidden="true"></i> 流派特色</h3>
+            <div class="detail-content">
+                <p>黔东南派苗绣源于唐末宋初，发展至今已有上千年历史，其核心特色体现在以下三方面：</p>
+                <p><strong>1. 针法繁复精湛</strong>：以绉绣、马尾绣为核心针法。绉绣需将丝线捻成细绳状，在面料上盘绕绣制，形成强烈的立体感；马尾绣则用马尾线打底，再覆盖丝线，图案精致耐用，常用于盛装背扇、衣襟等重要部位。</p>
+                <p><strong>2. 色彩艳丽浓烈</strong>：以红、绿、蓝、黄为核心色调，采用当地植物染料（如蓝靛、茜草）染制丝线，色彩饱和度高，且经日晒雨淋不易褪色。这种色彩搭配体现了苗族对自然的热爱与对生命的敬畏。</p>
+                <p><strong>3. 图案内涵深厚</strong>：图案多取材于苗族创世神话与农耕文化，如蝴蝶妈妈（象征生命起源）、苗族迁徙路线（记录族群历史）、梯田稻穗（体现农耕文明）等，是“穿在身上的史书”。</p>
+            </div>
+        </div>
+
+        <!-- 流派对比 -->
+        <div class="school-compare">
+            <h3 class="detail-title"><i class="fa fa-exchange" aria-hidden="true"></i> 流派对比</h3>
+            <div class="compare-controls">
+                <select class="compare-select" id="school1">
+                    <option value="qiandongnan">黔东南派</option>
+                    <option value="xiangxi">湘西派</option>
+                    <option value="guiyang">贵阳派</option>
+                </select>
+                <span>VS</span>
+                <select class="compare-select" id="school2">
+                    <option value="xiangxi">湘西派</option>
+                    <option value="qiandongnan">黔东南派</option>
+                    <option value="guiyang">贵阳派</option>
+                </select>
+                <button class="compare-btn" id="compareSchools">开始对比</button>
+            </div>
+            <table class="compare-table" id="compareTable">
+                <tr>
+                    <th>对比维度</th>
+                    <th id="school1Name">黔东南派</th>
+                    <th id="school2Name">湘西派</th>
+                </tr>
+                <tr>
+                    <td>核心针法</td>
+                    <td id="school1Tech">绉绣、马尾绣</td>
+                    <td id="school2Tech">平绣、辫绣</td>
+                </tr>
+                <tr>
+                    <td>色彩特点</td>
+                    <td id="school1Color">艳丽浓烈（红、绿、蓝为主）</td>
+                    <td id="school2Color">简洁素雅（黑、红、白为主）</td>
+                </tr>
+                <tr>
+                    <td>图案主题</td>
+                    <td id="school1Pattern">蝴蝶妈妈、迁徙路线、梯田</td>
+                    <td id="school2Pattern">几何纹样、花鸟、生活场景</td>
+                </tr>
+                <tr>
+                    <td>地理成因</td>
+                    <td id="school1Geo">山区封闭，保留古法技艺</td>
+                    <td id="school2Geo">与汉族文化交融，风格简化</td>
+                </tr>
+                <tr>
+                    <td>代表作品</td>
+                    <td id="school1Work">盛装背扇、银饰刺绣组合</td>
+                    <td id="school2Work">围裙、鞋面、枕头绣片</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 核心交互逻辑 -->
+    <script>
+        // 流派对比数据
+        const schoolData = {
+            qiandongnan: {
+                name: "黔东南派",
+                tech: "绉绣、马尾绣",
+                color: "艳丽浓烈（红、绿、蓝为主）",
+                pattern: "蝴蝶妈妈、迁徙路线、梯田",
+                geo: "山区封闭，保留古法技艺",
+                work: "盛装背扇、银饰刺绣组合"
+            },
+            xiangxi: {
+                name: "湘西派",
+                tech: "平绣、辫绣",
+                color: "简洁素雅（黑、红、白为主）",
+                pattern: "几何纹样、花鸟、生活场景",
+                geo: "与汉族文化交融，风格简化",
+                work: "围裙、鞋面、枕头绣片"
+            },
+            guiyang: {
+                name: "贵阳派",
+                tech: "金银线绣、平绣",
+                color: "华丽富贵（金、银、红为主）",
+                pattern: "花卉、龙凤、吉祥纹样",
+                geo: "省会周边，受中原文化影响深",
+                work: "披肩、钱包、装饰画"
+            }
+        };
+
+        // 对比按钮点击事件
+        $("#compareSchools").click(function() {
+            const school1Val = $("#school1").val();
+            const school2Val = $("#school2").val();
+
+            // 更新对比表格内容
+            $("#school1Name").text(schoolData[school1Val].name);
+            $("#school1Tech").text(schoolData[school1Val].tech);
+            $("#school1Color").text(schoolData[school1Val].color);
+            $("#school1Pattern").text(schoolData[school1Val].pattern);
+            $("#school1Geo").text(schoolData[school1Val].geo);
+            $("#school1Work").text(schoolData[school1Val].work);
+
+            $("#school2Name").text(schoolData[school2Val].name);
+            $("#school2Tech").text(schoolData[school2Val].tech);
+            $("#school2Color").text(schoolData[school2Val].color);
+            $("#school2Pattern").text(schoolData[school2Val].pattern);
+            $("#school2Geo").text(schoolData[school2Val].geo);
+            $("#school2Work").text(schoolData[school2Val].work);
+        });
+
+        // 返回地图按钮（修改：跳转至主页面default.html）
+        $("#backToMap").click(function() {
+            // 返回主地图页面，不带定位参数
+            window.location.href = "Default.html";
+        });
+
+        // 定位到地图按钮（双向联动核心：修改跳转至主页面）
+        $("#locateSchool").click(function() {
+            const lat = $(this).data("lat");
+            const lng = $(this).data("lng");
+            const name = $(this).data("name");
+            // 跳转到主地图，并传递定位参数（主地图需解析这些参数并定位）
+            window.location.href = `Default.html?locate=true&lat=${lat}&lng=${lng}&name=${encodeURIComponent(name)}`;
+        });
+    </script>
+</body>
+</html>

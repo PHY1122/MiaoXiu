@@ -1,0 +1,1899 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>云体验苗绣 - 苗绣文化GIS系统</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 全局样式重置与基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif;
+        }
+
+        :root {
+            /* 主题色 */
+            --primary-color: #2c5282;
+            --primary-light: #4a6fa5;
+            --primary-lighter: #f0f7ff;
+            --secondary-color: #e67e22;
+            --accent-color: #3498db;
+            /* 中性色 */
+            --text-dark: #333;
+            --text-medium: #666;
+            --text-light: #999;
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #e8f4f8;
+            --white: #ffffff;
+            /* 阴影与圆角 */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.05);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 15px;
+            --radius-circle: 50%;
+            /* 过渡动画 */
+            --transition-base: all 0.3s ease;
+            --transition-fast: all 0.2s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 顶部导航 */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(44, 82, 130, 0.1);
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .logo::before {
+                content: "🧵";
+                font-size: 1.5em;
+            }
+
+        .top-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .time-counter {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            background: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn {
+            padding: 0.5rem 1.25rem;
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition-base);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .back-btn:hover {
+                background: var(--primary-light);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-sm);
+            }
+
+        /* 游戏主体 */
+        .game-container {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        /* 左侧工具栏 */
+        .tool-panel {
+            width: 320px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+        }
+
+        .tool-title {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .tool-group {
+            margin-bottom: 2rem;
+        }
+
+            .tool-group h4 {
+                font-size: 1rem;
+                color: var(--text-dark);
+                margin-bottom: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+                .tool-group h4::before {
+                    content: "";
+                    width: 4px;
+                    height: 16px;
+                    background: var(--primary-light);
+                    border-radius: 2px;
+                }
+
+        /* 面料选择 */
+        .fabric-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            justify-content: flex-start;
+        }
+
+        .fabric-item {
+            width: 65px;
+            height: 65px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition-base);
+            border: 3px solid transparent;
+            overflow: hidden;
+            position: relative;
+        }
+
+            .fabric-item::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.05);
+                opacity: 0;
+                transition: var(--transition-fast);
+            }
+
+            .fabric-item.active {
+                border-color: var(--primary-color);
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(44, 82, 130, 0.15);
+            }
+
+            .fabric-item:hover::after {
+                opacity: 1;
+            }
+
+            .fabric-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: var(--transition-fast);
+            }
+
+            .fabric-item:hover img {
+                transform: scale(1.05);
+            }
+
+        .fabric-name {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-medium);
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* 丝线颜色选择 */
+        .color-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .color-item {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-circle);
+            cursor: pointer;
+            transition: var(--transition-base);
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+            .color-item.active {
+                border-color: var(--text-dark);
+                transform: scale(1.1);
+                box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+            }
+
+            .color-item::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 8px;
+                height: 8px;
+                background: rgba(255,255,255,0.7);
+                border-radius: var(--radius-circle);
+                opacity: 0;
+                transition: var(--transition-fast);
+            }
+
+            .color-item:hover::after {
+                opacity: 1;
+            }
+
+        .color-red {
+            background: #e74c3c;
+        }
+
+        .color-green {
+            background: #27ae60;
+        }
+
+        .color-blue {
+            background: #3498db;
+        }
+
+        .color-yellow {
+            background: #f1c40f;
+        }
+
+        .color-purple {
+            background: #9b59b6;
+        }
+
+        .color-orange {
+            background: #e67e22;
+        }
+
+        .color-name {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-medium);
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* 针法选择 - 增强样式 */
+        .stitch-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .stitch-item {
+            padding: 0.75rem 1rem;
+            background: var(--white);
+            color: var(--text-dark);
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition-base);
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            width: calc(50% - 0.375rem);
+            position: relative;
+            overflow: hidden;
+        }
+
+            /* 不同针法的独特样式 */
+            .stitch-item[data-stitch="flat"] {
+                border-left: 4px solid #4a6fa5;
+                background: linear-gradient(135deg, #f0f7ff 0%, #e3efff 100%);
+            }
+
+            .stitch-item[data-stitch="braid"] {
+                border-left: 4px solid #e74c3c;
+                background: linear-gradient(135deg, #fff0f0 0%, #ffe8e8 100%);
+            }
+
+            .stitch-item[data-stitch="seed"] {
+                border-left: 4px solid #27ae60;
+                background: linear-gradient(135deg, #f0fff4 0%, #e8ffe8 100%);
+            }
+
+            .stitch-item[data-stitch="crepe"] {
+                border-left: 4px solid #9b59b6;
+                background: linear-gradient(135deg, #f8f0ff 0%, #f0e8ff 100%);
+            }
+
+        /* 针法图标 */
+        .stitch-icon {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+            opacity: 0.8;
+        }
+
+        .stitch-item[data-stitch="flat"] .stitch-icon::before {
+            content: "━";
+            color: #4a6fa5;
+        }
+
+        .stitch-item[data-stitch="braid"] .stitch-icon::before {
+            content: "⏚";
+            color: #e74c3c;
+        }
+
+        .stitch-item[data-stitch="seed"] .stitch-icon::before {
+            content: "●";
+            color: #27ae60;
+            font-size: 1.5rem;
+        }
+
+        .stitch-item[data-stitch="crepe"] .stitch-icon::before {
+            content: "〰";
+            color: #9b59b6;
+            font-size: 1.3rem;
+        }
+
+        .stitch-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .stitch-desc {
+            font-size: 0.75rem;
+            color: var(--text-medium);
+            line-height: 1.4;
+        }
+
+        /* 针法预览效果 */
+        .stitch-preview {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            transition: var(--transition-fast);
+        }
+
+        .stitch-item[data-stitch="flat"] .stitch-preview::after {
+            content: "━";
+            color: #4a6fa5;
+            font-size: 1.2rem;
+        }
+
+        .stitch-item[data-stitch="braid"] .stitch-preview::after {
+            content: "⏚⏚⏚";
+            color: #e74c3c;
+            font-size: 0.9rem;
+            letter-spacing: -1px;
+        }
+
+        .stitch-item[data-stitch="seed"] .stitch-preview::after {
+            content: "●●";
+            color: #27ae60;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+        }
+
+        .stitch-item[data-stitch="crepe"] .stitch-preview::after {
+            content: "〰〰";
+            color: #9b59b6;
+            font-size: 1rem;
+            letter-spacing: -1px;
+        }
+
+        /* 激活状态 */
+        .stitch-item.active {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+
+            .stitch-item.active .stitch-icon {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+
+            .stitch-item.active .stitch-preview {
+                opacity: 0.8;
+                transform: translateX(-5px);
+            }
+
+        /* 悬停效果 */
+        .stitch-item:hover:not(.active) {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .stitch-item:hover .stitch-preview {
+            opacity: 0.7;
+            transform: translateX(-3px);
+        }
+
+        /* 画笔粗细选择 */
+        .brush-size-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .brush-size-item {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-circle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-lighter);
+            color: var(--primary-color);
+            border: 1px solid var(--bg-secondary);
+            cursor: pointer;
+            transition: var(--transition-base);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+            .brush-size-item.active {
+                background: var(--primary-color);
+                color: var(--white);
+                border-color: var(--primary-color);
+                box-shadow: 0 2px 8px rgba(44, 82, 130, 0.2);
+            }
+
+            .brush-size-item:hover:not(.active) {
+                background: var(--bg-secondary);
+                transform: translateY(-2px);
+            }
+
+        /* 图案选择 */
+        .pattern-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .pattern-item {
+            width: 75px;
+            height: 75px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition-base);
+            border: 3px solid transparent;
+            overflow: hidden;
+            position: relative;
+        }
+
+            .pattern-item::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.05);
+                opacity: 0;
+                transition: var(--transition-fast);
+            }
+
+            .pattern-item.active {
+                border-color: var(--primary-color);
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(44, 82, 130, 0.15);
+            }
+
+            .pattern-item:hover::after {
+                opacity: 1;
+            }
+
+            .pattern-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: var(--transition-fast);
+            }
+
+            .pattern-item:hover img {
+                transform: scale(1.05);
+            }
+
+        .pattern-name {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-medium);
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* 图案透明度调节 */
+        .opacity-control {
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: var(--primary-lighter);
+            border-radius: var(--radius-sm);
+        }
+
+        .opacity-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            outline: none;
+            margin-bottom: 0.5rem;
+        }
+
+            .opacity-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border-radius: var(--radius-circle);
+                background: var(--primary-color);
+                cursor: pointer;
+                transition: var(--transition-fast);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            }
+
+            .opacity-slider::-moz-range-thumb {
+                width: 20px;
+                height: 20px;
+                border-radius: var(--radius-circle);
+                background: var(--primary-color);
+                cursor: pointer;
+                transition: var(--transition-fast);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                border: none;
+            }
+
+            .opacity-slider::-webkit-slider-thumb:hover {
+                background: var(--primary-light);
+                transform: scale(1.1);
+            }
+
+        .opacity-value {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        /* 操作按钮 */
+        .action-btns {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition-base);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        .undo-btn, .redo-btn {
+            background: var(--primary-lighter);
+            color: var(--primary-color);
+        }
+
+            .undo-btn:hover, .redo-btn:hover {
+                background: var(--bg-secondary);
+                transform: translateY(-2px);
+            }
+
+            .undo-btn:disabled, .redo-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .reset-btn {
+            background: #f8f9fa;
+            color: var(--text-dark);
+            border: 1px solid #e9ecef;
+        }
+
+            .reset-btn:hover {
+                background: #e9ecef;
+                transform: translateY(-2px);
+            }
+
+        .download-btn {
+            background: var(--accent-color);
+            color: var(--white);
+            flex: 2;
+        }
+
+            .download-btn:hover {
+                background: #2980b9;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+            }
+
+        .complete-btn {
+            background: var(--secondary-color);
+            color: var(--white);
+            flex: 2;
+        }
+
+            .complete-btn:hover {
+                background: #d35400;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(230, 126, 34, 0.2);
+            }
+
+        /* 右侧刺绣区域 */
+        .embroidery-area {
+            flex: 1;
+            min-width: 600px;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .embroidery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--bg-secondary);
+        }
+
+        .embroidery-title {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+            .embroidery-title::before {
+                content: "🎨";
+                font-size: 1.2em;
+            }
+
+        .step-indicator {
+            font-size: 0.875rem;
+            color: var(--text-medium);
+            background: var(--primary-lighter);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        /* 刺绣画布 */
+        .canvas-container {
+            flex: 1;
+            border: 2px dashed var(--bg-secondary);
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+            min-height: 500px;
+            /* 默认纯棉布纹理 */
+            background-image: linear-gradient(rgba(245,245,245,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(245,245,245,0.8) 1px, transparent 1px);
+            background-size: 10px 10px;
+            transition: var(--transition-fast);
+        }
+
+            .canvas-container:hover {
+                border-color: var(--primary-light);
+            }
+
+            /* 不同面料的纹理样式 */
+            .canvas-container.fabric-cotton {
+                background-image: linear-gradient(rgba(245,245,245,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(245,245,245,0.8) 1px, transparent 1px);
+                background-size: 10px 10px;
+                background-color: #f9f9f9;
+            }
+
+            .canvas-container.fabric-linen {
+                background-image: linear-gradient(rgba(230,230,230,0.9) 2px, transparent 2px), linear-gradient(90deg, rgba(230,230,230,0.9) 2px, transparent 2px);
+                background-size: 15px 15px;
+                background-color: #f0ebe0;
+            }
+
+            .canvas-container.fabric-silk {
+                background-image: linear-gradient(45deg, rgba(255,255,255,0.4) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.4) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.4) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.4) 75%);
+                background-size: 20px 20px;
+                background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+                background-color: #f8f9ff;
+            }
+
+            .canvas-container.fabric-canvas {
+                background-image: linear-gradient(rgba(200,200,200,0.9) 3px, transparent 3px), linear-gradient(90deg, rgba(200,200,200,0.9) 3px, transparent 3px);
+                background-size: 20px 20px;
+                background-color: #e8e0d0;
+            }
+
+        #embroideryCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* 图案预览层 */
+        #patternPreview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.5;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+
+        .canvas-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--text-light);
+            z-index: 5;
+            padding: 2rem;
+            background: rgba(255,255,255,0.8);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+            .canvas-placeholder p {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+                color: var(--text-medium);
+                font-weight: 500;
+            }
+
+        .canvas-tip {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* 步骤提示 */
+        .step-tips {
+            margin-top: 1.5rem;
+            background: var(--primary-lighter);
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            border-left: 4px solid var(--primary-light);
+        }
+
+            .step-tips h4 {
+                font-size: 1rem;
+                color: var(--primary-color);
+                margin-bottom: 0.75rem;
+                font-weight: 600;
+            }
+
+            .step-tips p {
+                font-size: 0.875rem;
+                color: var(--text-dark);
+                line-height: 1.6;
+                margin-bottom: 1rem;
+            }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            margin-top: 0.75rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary-light);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px rgba(74, 111, 165, 0.4);
+        }
+
+        /* 完成弹窗 */
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            width: 90%;
+            max-width: 650px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.4s ease;
+        }
+
+        .result-modal.show .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+            .modal-title::before {
+                content: "🏆";
+                font-size: 1.2em;
+            }
+
+        .result-img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            margin-bottom: 1.5rem;
+            border-radius: var(--radius-md);
+            border: 4px solid var(--primary-lighter);
+            box-shadow: var(--shadow-md);
+        }
+
+        .modal-desc {
+            font-size: 1rem;
+            color: var(--text-dark);
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+            text-align: left;
+            padding: 0 0.5rem;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition-base);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .modal-download-btn {
+            background: var(--accent-color);
+            color: var(--white);
+        }
+
+            .modal-download-btn:hover {
+                background: #2980b9;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+            }
+
+        .restart-btn {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+            .restart-btn:hover {
+                background: var(--primary-light);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(44, 82, 130, 0.2);
+            }
+
+        .close-modal-btn {
+            background: #f8f9fa;
+            color: var(--text-dark);
+            border: 1px solid #e9ecef;
+        }
+
+            .close-modal-btn:hover {
+                background: #e9ecef;
+                transform: translateY(-2px);
+            }
+
+        /* 响应式适配 */
+        @media (max-width: 1200px) {
+            .game-container {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+
+            .tool-panel {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .embroidery-area {
+                min-width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .canvas-container {
+                min-height: 400px;
+            }
+
+            .top-nav {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .top-info {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .action-btns {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .action-btn {
+                width: 100%;
+                flex: none;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+
+            .result-img {
+                max-height: 300px;
+            }
+
+            .modal-btns {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .modal-btn {
+                width: 100%;
+                flex: none;
+            }
+
+            .embroidery-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .step-indicator {
+                width: 100%;
+                text-align: center;
+            }
+
+            .stitch-item {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .canvas-container {
+                min-height: 300px;
+            }
+
+            .fabric-list, .color-list, .pattern-list {
+                justify-content: center;
+            }
+
+            .time-counter {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .modal-title {
+                font-size: 1.25rem;
+            }
+
+            .modal-desc {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fabric-item, .color-item, .stitch-item, .pattern-item, .brush-size-item {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+            .fabric-item:nth-child(1) {
+                animation-delay: 0.05s;
+            }
+
+            .fabric-item:nth-child(2) {
+                animation-delay: 0.1s;
+            }
+
+            .fabric-item:nth-child(3) {
+                animation-delay: 0.15s;
+            }
+
+            .fabric-item:nth-child(4) {
+                animation-delay: 0.2s;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航 -->
+        <div class="top-nav">
+            <div class="logo">云体验苗绣</div>
+            <div class="top-info">
+                <div class="time-counter">
+                    <i class="fas fa-clock"></i> 刺绣时长: <span id="timeCount">00:00</span>
+                </div>
+                <button class="back-btn" id="backToMain">
+                    <i class="fas fa-arrow-left"></i> 返回主页面
+                </button>
+            </div>
+        </div>
+
+        <!-- 游戏主体 -->
+        <div class="game-container">
+            <!-- 左侧工具栏 -->
+            <div class="tool-panel">
+                <h3 class="tool-title">刺绣工具箱</h3>
+
+                <!-- 面料选择 -->
+                <div class="tool-group">
+                    <h4>选择面料</h4>
+                    <div class="fabric-list">
+                        <div>
+                            <div class="fabric-item active" data-fabric="cotton">
+                                <img src="images/experience/fabric1.jpg" alt="纯棉布" title="纯棉布">
+                            </div>
+                            <div class="fabric-name">纯棉布</div>
+                        </div>
+                        <div>
+                            <div class="fabric-item" data-fabric="linen">
+                                <img src="images/experience/fabric2.jpg" alt="麻布" title="麻布">
+                            </div>
+                            <div class="fabric-name">麻布</div>
+                        </div>
+                        <div>
+                            <div class="fabric-item" data-fabric="silk">
+                                <img src="images/experience/fabric3.jpg" alt="丝绸" title="丝绸">
+                            </div>
+                            <div class="fabric-name">丝绸</div>
+                        </div>
+                        <div>
+                            <div class="fabric-item" data-fabric="canvas">
+                                <img src="images/experience/fabric4.jpg" alt="帆布" title="帆布">
+                            </div>
+                            <div class="fabric-name">帆布</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 丝线颜色选择 -->
+                <div class="tool-group">
+                    <h4>选择丝线颜色</h4>
+                    <div class="color-list">
+                        <div>
+                            <div class="color-item color-red active" data-color="#e74c3c"></div>
+                            <div class="color-name">红色</div>
+                        </div>
+                        <div>
+                            <div class="color-item color-green" data-color="#27ae60"></div>
+                            <div class="color-name">绿色</div>
+                        </div>
+                        <div>
+                            <div class="color-item color-blue" data-color="#3498db"></div>
+                            <div class="color-name">蓝色</div>
+                        </div>
+                        <div>
+                            <div class="color-item color-yellow" data-color="#f1c40f"></div>
+                            <div class="color-name">黄色</div>
+                        </div>
+                        <div>
+                            <div class="color-item color-purple" data-color="#9b59b6"></div>
+                            <div class="color-name">紫色</div>
+                        </div>
+                        <div>
+                            <div class="color-item color-orange" data-color="#e67e22"></div>
+                            <div class="color-name">橙色</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 针法选择 -->
+                <div class="tool-group">
+                    <h4>选择针法</h4>
+                    <div class="stitch-list">
+                        <div class="stitch-item active" data-stitch="flat">
+                            <div class="stitch-icon"></div>
+                            <div class="stitch-name">平绣</div>
+                            <div class="stitch-desc">平整细腻，适合大面积填充</div>
+                            <div class="stitch-preview"></div>
+                        </div>
+                        <div class="stitch-item" data-stitch="braid">
+                            <div class="stitch-icon"></div>
+                            <div class="stitch-name">辫绣</div>
+                            <div class="stitch-desc">立体纹理，有编织感</div>
+                            <div class="stitch-preview"></div>
+                        </div>
+                        <div class="stitch-item" data-stitch="seed">
+                            <div class="stitch-icon"></div>
+                            <div class="stitch-name">打籽绣</div>
+                            <div class="stitch-desc">颗粒感强，适合点缀</div>
+                            <div class="stitch-preview"></div>
+                        </div>
+                        <div class="stitch-item" data-stitch="crepe">
+                            <div class="stitch-icon"></div>
+                            <div class="stitch-name">绉绣</div>
+                            <div class="stitch-desc">波浪纹理，柔软有弹性</div>
+                            <div class="stitch-preview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 画笔粗细选择 -->
+                <div class="tool-group">
+                    <h4>画笔粗细</h4>
+                    <div class="brush-size-list">
+                        <div class="brush-size-item active" data-size="3">细</div>
+                        <div class="brush-size-item" data-size="5">中</div>
+                        <div class="brush-size-item" data-size="8">粗</div>
+                        <div class="brush-size-item" data-size="12">特粗</div>
+                    </div>
+                </div>
+
+                <!-- 图案选择 -->
+                <div class="tool-group">
+                    <h4>选择图案</h4>
+                    <div class="pattern-list">
+                        <div>
+                            <div class="pattern-item" data-pattern="butterfly" data-pattern-img="images/experience/pattern1.jpg">
+                                <img src="images/experience/pattern1.jpg" alt="蝴蝶妈妈纹" title="蝴蝶妈妈纹">
+                            </div>
+                            <div class="pattern-name">蝴蝶妈妈纹</div>
+                        </div>
+                        <div>
+                            <div class="pattern-item" data-pattern="dragon" data-pattern-img="images/experience/pattern2.jpg">
+                                <img src="images/experience/pattern2.jpg" alt="苗绣龙纹" title="苗绣龙纹">
+                            </div>
+                            <div class="pattern-name">苗绣龙纹</div>
+                        </div>
+                        <div>
+                            <div class="pattern-item" data-pattern="frog" data-pattern-img="images/experience/pattern3.jpg">
+                                <img src="images/experience/pattern3.jpg" alt="蛙纹" title="蛙纹">
+                            </div>
+                            <div class="pattern-name">蛙纹</div>
+                        </div>
+                        <div>
+                            <div class="pattern-item" data-pattern="lotus" data-pattern-img="images/experience/pattern4.jpg">
+                                <img src="images/experience/pattern4.jpg" alt="缠枝莲纹" title="缠枝莲纹">
+                            </div>
+                            <div class="pattern-name">缠枝莲纹</div>
+                        </div>
+                    </div>
+                    <!-- 图案透明度调节 -->
+                    <div class="opacity-control">
+                        <input type="range" min="30" max="80" value="50" class="opacity-slider" id="patternOpacity">
+                        <div class="opacity-value">透明度: <span id="opacityValue">50</span>%</div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="action-btns">
+                    <button class="action-btn undo-btn" id="undoBtn" disabled>
+                        <i class="fas fa-undo"></i> 撤销
+                    </button>
+                    <button class="action-btn redo-btn" id="redoBtn" disabled>
+                        <i class="fas fa-redo"></i> 重做
+                    </button>
+                    <button class="action-btn reset-btn">
+                        <i class="fas fa-sync-alt"></i> 重置画布
+                    </button>
+                    <button class="action-btn download-btn" id="downloadBtn">
+                        <i class="fas fa-download"></i> 下载作品
+                    </button>
+                    <button class="action-btn complete-btn">
+                        <i class="fas fa-check"></i> 完成刺绣
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧刺绣区域 -->
+            <div class="embroidery-area">
+                <div class="embroidery-header">
+                    <div class="embroidery-title">刺绣画布</div>
+                    <div class="step-indicator">当前步骤：1.选择图案 → 2.绘制轮廓 → 3.填充纹理</div>
+                </div>
+
+                <!-- 画布容器 -->
+                <div class="canvas-container fabric-cotton">
+                    <canvas id="embroideryCanvas"></canvas>
+                    <img id="patternPreview" src="" alt="图案预览" style="display: none;">
+                    <div class="canvas-placeholder">
+                        <p>请先从左侧选择一个图案</p>
+                        <div class="canvas-tip">选择后可在画布上点击/拖动绘制</div>
+                    </div>
+                </div>
+
+                <!-- 步骤提示 -->
+                <div class="step-tips">
+                    <h4>刺绣小技巧</h4>
+                    <p>1. 纯棉布适合新手（纹理清晰，易上色）；2. 打籽绣适合点缀花蕊，平绣适合大面积填充；3. 绘制时尽量沿着图案轮廓，效果更美观！</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="canvas-tip" id="drawTip">未开始绘制</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成弹窗 -->
+    <div class="result-modal" id="resultModal">
+        <div class="modal-content">
+            <h3 class="modal-title">你的苗绣作品完成啦！</h3>
+            <img src="" alt="我的苗绣作品" class="result-img" id="resultImg">
+            <p class="modal-desc" id="resultDesc">你选择了【蝴蝶妈妈纹】+【平绣】+【纯棉布】，蝴蝶妈妈是苗族创世神话的核心，象征生命繁衍与族群起源。你的作品完美还原了黔东南派苗绣的传统风格，为你点赞！</p>
+            <div class="modal-btns">
+                <button class="modal-btn modal-download-btn" id="modalDownloadBtn">
+                    <i class="fas fa-download"></i> 下载作品
+                </button>
+                <button class="modal-btn restart-btn">
+                    <i class="fas fa-sync-alt"></i> 再绣一幅
+                </button>
+                <button class="modal-btn close-modal-btn">
+                    <i class="fas fa-times"></i> 返回主页面
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化画布
+        $(document).ready(function () {
+            // 画布核心变量
+            const canvas = document.getElementById('embroideryCanvas');
+            const ctx = canvas.getContext('2d');
+            const patternPreview = document.getElementById('patternPreview');
+            let isDrawing = false;
+            let currentPattern = null;
+            let currentColor = '#e74c3c';
+            let currentStitch = 'flat';
+            let currentBrushSize = 3;
+            let drawCount = 0;
+            const totalDrawNeed = 30;
+
+            // 撤销/重做历史记录
+            let history = [];
+            let historyIndex = -1;
+
+            // 刺绣时长统计
+            let timer = null;
+            let seconds = 0;
+
+            // 1. 画布尺寸自适应
+            function resizeCanvas() {
+                const container = $('.canvas-container');
+                const containerWidth = container.width();
+                const containerHeight = container.height();
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+                canvas.width = containerWidth;
+                canvas.height = containerHeight;
+                ctx.drawImage(tempCanvas, 0, 0);
+
+                $('.canvas-placeholder').css({
+                    'top': '50%',
+                    'left': '50%',
+                    'transform': 'translate(-50%, -50%)'
+                });
+
+                updatePatternPreviewSize();
+                saveToHistory();
+            }
+
+            function updatePatternPreviewSize() {
+                if (patternPreview.src && patternPreview.style.display !== 'none') {
+                    const container = $('.canvas-container');
+                    const containerWidth = container.width();
+                    const containerHeight = container.height();
+                    const imgWidth = patternPreview.naturalWidth;
+                    const imgHeight = patternPreview.naturalHeight;
+
+                    const scale = Math.min(containerWidth / imgWidth * 0.8, containerHeight / imgHeight * 0.8);
+                    const newWidth = imgWidth * scale;
+                    const newHeight = imgHeight * scale;
+
+                    patternPreview.style.width = `${newWidth}px`;
+                    patternPreview.style.height = `${newHeight}px`;
+                    patternPreview.style.left = `${(containerWidth - newWidth) / 2}px`;
+                    patternPreview.style.top = `${(containerHeight - newHeight) / 2}px`;
+                }
+            }
+
+            function saveToHistory() {
+                if (historyIndex < history.length - 1) {
+                    history = history.slice(0, historyIndex + 1);
+                }
+                const data = canvas.toDataURL('image/png');
+                history.push(data);
+                historyIndex = history.length - 1;
+                updateHistoryButtons();
+            }
+
+            function updateHistoryButtons() {
+                $('#undoBtn').prop('disabled', historyIndex <= 0);
+                $('#redoBtn').prop('disabled', historyIndex >= history.length - 1);
+            }
+
+            function undo() {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    const data = history[historyIndex];
+                    const img = new Image();
+                    img.onload = function () {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = data;
+                    updateHistoryButtons();
+                    updateDrawTip('已撤销上一步操作');
+                }
+            }
+
+            function redo() {
+                if (historyIndex < history.length - 1) {
+                    historyIndex++;
+                    const data = history[historyIndex];
+                    const img = new Image();
+                    img.onload = function () {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = data;
+                    updateHistoryButtons();
+                    updateDrawTip('已重做上一步操作');
+                }
+            }
+
+            function downloadWork() {
+                if (!currentPattern && drawCount === 0) {
+                    alert('请先绘制作品再下载哦！');
+                    return;
+                }
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                const fabricType = $('.fabric-item.active').data('fabric');
+                switch (fabricType) {
+                    case 'cotton':
+                        tempCtx.fillStyle = '#f9f9f9';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                        tempCtx.strokeStyle = 'rgba(245,245,245,0.8)';
+                        tempCtx.lineWidth = 1;
+                        for (let i = 0; i < tempCanvas.height; i += 10) {
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(0, i);
+                            tempCtx.lineTo(tempCanvas.width, i);
+                            tempCtx.stroke();
+                        }
+                        for (let i = 0; i < tempCanvas.width; i += 10) {
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(i, 0);
+                            tempCtx.lineTo(i, tempCanvas.height);
+                            tempCtx.stroke();
+                        }
+                        break;
+                    case 'linen':
+                        tempCtx.fillStyle = '#f0ebe0';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                        tempCtx.strokeStyle = 'rgba(230,230,230,0.9)';
+                        tempCtx.lineWidth = 2;
+                        for (let i = 0; i < tempCanvas.height; i += 15) {
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(0, i);
+                            tempCtx.lineTo(tempCanvas.width, i);
+                            tempCtx.stroke();
+                        }
+                        for (let i = 0; i < tempCanvas.width; i += 15) {
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(i, 0);
+                            tempCtx.lineTo(i, tempCanvas.height);
+                            tempCtx.stroke();
+                        }
+                        break;
+                    case 'silk':
+                        tempCtx.fillStyle = '#f8f9ff';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                        tempCtx.fillStyle = 'rgba(255,255,255,0.4)';
+                        for (let i = 0; i < tempCanvas.width; i += 20) {
+                            for (let j = 0; j < tempCanvas.height; j += 20) {
+                                tempCtx.beginPath();
+                                tempCtx.moveTo(i, j);
+                                tempCtx.lineTo(i + 10, j + 10);
+                                tempCtx.lineTo(i + 20, j);
+                                tempCtx.lineTo(i + 10, j - 10);
+                                tempCtx.closePath();
+                                tempCtx.fill();
+                            }
+                        }
+                        break;
+                    case 'canvas':
+                        tempCtx.fillStyle = '#e8e0d0';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                        tempCtx.strokeStyle = 'rgba(200,200,200,0.9)';
+                        tempCtx.lineWidth = 3;
+                        for (let i = 0; i < tempCanvas.height; i += 20) {
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(0, i);
+                            tempCtx.lineTo(tempCanvas.width, i);
+                            tempCtx.stroke();
+                        }
+                        for (let i = 0; i < tempCanvas.width; i += 20) {
+                            tempCtx.beginPath();
+                            tempCtx.moveTo(i, 0);
+                            tempCtx.lineTo(i, tempCanvas.height);
+                            tempCtx.stroke();
+                        }
+                        break;
+                }
+
+                tempCtx.drawImage(canvas, 0, 0);
+
+                const link = document.createElement('a');
+                link.download = `我的苗绣作品_${new Date().getTime()}.png`;
+                link.href = tempCanvas.toDataURL('image/png');
+                link.click();
+
+                updateDrawTip('作品下载成功！');
+            }
+
+            function startTimer() {
+                if (!timer) {
+                    timer = setInterval(() => {
+                        seconds++;
+                        const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+                        const secs = (seconds % 60).toString().padStart(2, '0');
+                        $('#timeCount').text(`${minutes}:${secs}`);
+                    }, 1000);
+                }
+            }
+
+            function stopTimer() {
+                if (timer) {
+                    clearInterval(timer);
+                    timer = null;
+                }
+            }
+
+            resizeCanvas();
+            $(window).resize(resizeCanvas);
+
+            // 2. 面料选择
+            $('.fabric-item').click(function () {
+                $('.fabric-item').removeClass('active');
+                $(this).addClass('active');
+                const fabricType = $(this).data('fabric');
+                $('.canvas-container').removeClass('fabric-cotton fabric-linen fabric-silk fabric-canvas');
+                $('.canvas-container').addClass(`fabric-${fabricType}`);
+                const fabricName = $(this).attr('title');
+                let fabricFeature = '';
+                switch (fabricType) {
+                    case 'cotton': fabricFeature = '柔软亲肤，新手易上手'; break;
+                    case 'linen': fabricFeature = '纹理粗犷，富有质感'; break;
+                    case 'silk': fabricFeature = '光泽顺滑，高档精致'; break;
+                    case 'canvas': fabricFeature = '厚实耐磨，立体感强'; break;
+                }
+                updateDrawTip(`已切换面料：${fabricName}（${fabricFeature}）`);
+                $('.canvas-container').css('border-color', '#2c5282');
+                setTimeout(() => {
+                    $('.canvas-container').css('border-color', '#e8f4f8');
+                }, 500);
+                saveToHistory();
+            });
+
+            // 3. 颜色选择
+            $('.color-item').click(function () {
+                $('.color-item').removeClass('active');
+                $(this).addClass('active');
+                currentColor = $(this).data('color');
+                updateDrawTip(`已选择颜色：${$(this).next('.color-name').text()}`);
+            });
+
+            // 4. 针法选择
+            $('.stitch-item').click(function () {
+                $('.stitch-item').removeClass('active');
+                $(this).addClass('active');
+                currentStitch = $(this).data('stitch');
+                const stitchName = $(this).find('.stitch-name').text();
+                const stitchDesc = $(this).find('.stitch-desc').text();
+                updateDrawTip(`已选择针法：${stitchName}（${stitchDesc}）`);
+            });
+
+            // 5. 画笔粗细选择
+            $('.brush-size-item').click(function () {
+                $('.brush-size-item').removeClass('active');
+                $(this).addClass('active');
+                currentBrushSize = parseInt($(this).data('size'));
+                updateDrawTip(`已选择画笔粗细：${$(this).text()}`);
+            });
+
+            // 6. 图案选择
+            $('.pattern-item').click(function () {
+                $('.pattern-item').removeClass('active');
+                $(this).addClass('active');
+                currentPattern = $(this).data('pattern');
+                const patternName = $(this).next('.pattern-name').text();
+                const patternImgSrc = $(this).data('pattern-img');
+                patternPreview.src = patternImgSrc;
+                patternPreview.style.display = 'block';
+                updatePatternPreviewSize();
+                $('.canvas-placeholder p').text(`已选择【${patternName}】`);
+                $('.canvas-placeholder .canvas-tip').text('沿着半透明图案轮廓绘制，效果更佳');
+                updateDrawTip(`已选择图案：${patternName}（苗族传统纹样）`);
+                drawCount = 0;
+                updateProgress();
+                saveToHistory();
+                startTimer();
+            });
+
+            // 7. 图案透明度调节
+            $('#patternOpacity').on('input', function () {
+                const opacity = $(this).val() / 100;
+                patternPreview.style.opacity = opacity;
+                $('#opacityValue').text($(this).val());
+                updateDrawTip(`图案透明度已调节至：${$(this).val()}%`);
+            });
+
+            // 8. 画布绘制逻辑
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            function startDrawing(e) {
+                if (!currentPattern) {
+                    updateDrawTip('请先从左侧选择图案！');
+                    return;
+                }
+                isDrawing = true;
+                ctx.beginPath();
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                ctx.moveTo(x, y);
+                updateDrawTip('正在绘制...（松开鼠标结束当前笔画）');
+                startTimer();
+            }
+
+            function draw(e) {
+                if (!isDrawing || !currentPattern) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                ctx.lineTo(x, y);
+
+                if (currentStitch === 'flat') {
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentBrushSize;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                } else if (currentStitch === 'braid') {
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentBrushSize + 5;
+                    ctx.lineCap = 'round';
+                    ctx.setLineDash([5, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(x - 2, y - 2);
+                    ctx.lineTo(x, y);
+                    ctx.lineWidth = currentBrushSize - 2;
+                    ctx.stroke();
+                } else if (currentStitch === 'seed') {
+                    ctx.fillStyle = currentColor;
+                    ctx.beginPath();
+                    const radius = currentBrushSize / 2;
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (Math.floor(x) % 5 === 0 && Math.floor(y) % 5 === 0) {
+                        ctx.beginPath();
+                        ctx.arc(x + radius / 2, y + radius / 2, radius / 0.8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (currentStitch === 'crepe') {
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = currentBrushSize + 3;
+                    ctx.lineCap = 'round';
+                    ctx.setLineDash([8, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(x - 1, y - 1);
+                    ctx.lineTo(x, y);
+                    ctx.strokeStyle = lightenColor(currentColor, 30);
+                    ctx.lineWidth = currentBrushSize - 1;
+                    ctx.stroke();
+                }
+
+                if (drawCount < totalDrawNeed) {
+                    drawCount += 0.1;
+                    updateProgress();
+                }
+            }
+
+            function stopDrawing() {
+                if (isDrawing) {
+                    isDrawing = false;
+                    ctx.closePath();
+                    updateDrawTip('笔画完成！可继续绘制或选择其他工具');
+                    if (drawCount < totalDrawNeed) {
+                        drawCount += 1;
+                        updateProgress();
+                    }
+                    saveToHistory();
+                }
+            }
+
+            function updateDrawTip(text) {
+                $('#drawTip').text(text);
+                $('#drawTip').css('color', '#2c5282');
+                setTimeout(() => {
+                    $('#drawTip').css('color', '#999');
+                }, 1000);
+            }
+
+            function updateProgress() {
+                const progress = Math.min(100, Math.floor((drawCount / totalDrawNeed) * 100));
+                $('#progressFill').css('width', `${progress}%`);
+                if (progress === 100) {
+                    updateDrawTip('绘制进度100%！点击"完成刺绣"查看作品解析');
+                    stopTimer();
+                } else {
+                    updateDrawTip(`绘制进度${progress}%（继续绘制完成作品）`);
+                }
+            }
+
+            function lightenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                return '#' + (
+                    0x1000000 +
+                    (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255)
+                ).toString(16).slice(1);
+            }
+
+            // 10. 重置画布
+            $('.reset-btn').click(function () {
+                saveToHistory();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawCount = 0;
+                updateProgress();
+                updateDrawTip('画布已重置，可重新选择工具绘制');
+                if (currentPattern) {
+                    const patternName = $(`.pattern-item.active`).next('.pattern-name').text();
+                    $('.canvas-placeholder p').text(`已选择【${patternName}】`);
+                } else {
+                    $('.canvas-placeholder p').text('请先从左侧选择一个图案');
+                    patternPreview.style.display = 'none';
+                    stopTimer();
+                    seconds = 0;
+                    $('#timeCount').text('00:00');
+                }
+                saveToHistory();
+            });
+
+            // 11. 完成刺绣
+            $('.complete-btn').click(function () {
+                if (!currentPattern) {
+                    alert('请先选择图案并绘制哦！');
+                    return;
+                }
+                if (drawCount < totalDrawNeed * 0.5) {
+                    if (!confirm('绘制进度不足50%，确定要提交作品吗？')) {
+                        return;
+                    }
+                }
+                stopTimer();
+                patternPreview.style.display = 'none';
+                const canvasData = canvas.toDataURL('image/png');
+                patternPreview.style.display = 'block';
+                $('#resultImg').attr('src', canvasData);
+                const fabric = $(`.fabric-item.active`).attr('title');
+                const stitch = $(`.stitch-item.active`).find('.stitch-name').text();
+                const patternName = $(`.pattern-item.active`).next('.pattern-name').text();
+                const color = $(`.color-item.active`).next('.color-name').text();
+                const brushSize = $(`.brush-size-item.active`).text();
+                const timeSpent = $('#timeCount').text();
+
+                let patternDesc = '';
+                if (currentPattern === 'butterfly') {
+                    patternDesc = `蝴蝶妈妈是苗族创世神话的核心，传说苗族祖先源于蝴蝶卵，该纹样常用于儿童服饰，象征护佑生命成长。你花费${timeSpent}完成作品，采用黔东南派经典平绣技法+${brushSize}号画笔，色彩鲜艳，符合传统苗绣"浓艳对比"的审美特点。`;
+                } else if (currentPattern === 'dragon') {
+                    patternDesc = `苗绣龙纹不同于汉族龙的威严，融入了鱼、蛙等元素，象征对雨水的祈求与自然敬畏。你花费${timeSpent}完成作品，选择帆布面料+橙色丝线+${brushSize}号画笔，突出了龙纹的力量感，是湘西派苗绣"简洁大气"风格的体现。`;
+                } else if (currentPattern === 'frog') {
+                    patternDesc = `蛙纹是苗族农耕文化的象征，青蛙能保护庄稼，且繁殖能力强，寓意丰收与多子多福。你花费${timeSpent}完成作品，用打籽绣+${brushSize}号画笔模拟蛙皮颗粒感，细节生动，还原了贵州台江地区苗绣的传统技法。`;
+                } else if (currentPattern === 'lotus') {
+                    patternDesc = `缠枝莲纹寓意"生生不息、连绵不绝"，是苗族婚嫁服饰的核心吉祥图案。你花费${timeSpent}完成作品，用丝绸面料+紫色丝线+${brushSize}号画笔，呈现出贵阳派苗绣"华丽精致"的风格，适合用于婚庆场景装饰。`;
+                }
+
+                $('#resultDesc').text(`你选择了【${patternName}】+【${stitch}】+【${fabric}】+【${color}】丝线+【${brushSize}】画笔。${patternDesc}继续加油，你已掌握苗绣基础技法！`);
+                $('#resultModal').css('display', 'flex').addClass('show');
+            });
+
+            // 12. 撤销/重做按钮事件
+            $('#undoBtn').click(undo);
+            $('#redoBtn').click(redo);
+
+            // 13. 下载按钮事件
+            $('#downloadBtn').click(downloadWork);
+            $('#modalDownloadBtn').click(downloadWork);
+
+            // 14. 弹窗按钮事件
+            $('.restart-btn').click(function () {
+                $('#resultModal').hide().removeClass('show');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawCount = 0;
+                updateProgress();
+                updateDrawTip('已重新开始，可继续绘制');
+                seconds = 0;
+                $('#timeCount').text('00:00');
+                if (currentPattern) {
+                    const activePattern = $(`.pattern-item.active`);
+                    if (activePattern.length > 0) {
+                        patternPreview.src = activePattern.data('pattern-img');
+                        patternPreview.style.display = 'block';
+                        updatePatternPreviewSize();
+                        startTimer();
+                    }
+                }
+                history = [];
+                historyIndex = -1;
+                saveToHistory();
+                updateHistoryButtons();
+            });
+
+            $('.close-modal-btn').click(function () {
+                $('#resultModal').hide().removeClass('show');
+                window.location.href = 'Default.aspx';
+            });
+
+            $('#resultModal').click(function (e) {
+                if (e.target === this) {
+                    $(this).hide().removeClass('show');
+                }
+            });
+
+            // 15. 返回主页面
+            $('#backToMain').click(function () {
+                if (drawCount > 0) {
+                    if (confirm('当前作品未完成，确定要返回主页面吗？')) {
+                        window.location.href = 'Default.html';
+                    }
+                } else {
+                    window.location.href = 'Default.html';
+                }
+            });
+
+            updateProgress();
+            saveToHistory();
+            updateHistoryButtons();
+        });
+    </script>
+</body>
+</html>

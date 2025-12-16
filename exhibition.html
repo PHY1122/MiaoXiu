@@ -1,0 +1,896 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苗绣数字展厅 - 苗绣文化GIS系统</title>
+    <!-- 引入公共依赖 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- 页面样式 -->
+    <style>
+        /* 继承主系统风格 */
+        body {
+            margin: 0;
+            font-family: "微软雅黑", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c5282;
+            padding-bottom: 15px;
+        }
+
+            .header h1 {
+                color: #2c5282;
+                margin: 0;
+                font-size: 28px;
+            }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+            .back-btn:hover {
+                background: #1a365d;
+            }
+
+        /* 展厅分类导航 */
+        .exhibition-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .exhibition-tab {
+            padding: 10px 20px;
+            background: #f0f7ff;
+            color: #2c5282;
+            border: 1px solid #e8f4f8;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+            .exhibition-tab:hover {
+                background: #e8f4f8;
+            }
+
+            .exhibition-tab.active {
+                background: #2c5282;
+                color: white;
+                border-color: #2c5282;
+            }
+
+        /* 展厅展品容器 - 横向排版优化 */
+        .exhibition-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+            justify-content: flex-start;
+        }
+
+        .exhibit-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            position: relative;
+            width: calc(33.333% - 15px);
+            min-width: 280px;
+        }
+
+            .exhibit-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .exhibit-img {
+            width: 100%;
+            height: 250px;
+            overflow: hidden;
+            position: relative;
+        }
+
+            .exhibit-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s;
+            }
+
+        .exhibit-card:hover .exhibit-img img {
+            transform: scale(1.05);
+        }
+
+        .exhibit-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .exhibit-card:hover .exhibit-mask {
+            opacity: 1;
+        }
+
+        .mask-title {
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+
+        .mask-desc {
+            line-height: 1.6;
+            font-size: 14px;
+            margin: 0 0 15px 0;
+        }
+
+        .mask-btn {
+            padding: 8px 20px;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            .mask-btn:hover {
+                background: #2c5282;
+            }
+
+        .exhibit-info {
+            padding: 20px;
+        }
+
+        .exhibit-name {
+            color: #2c5282;
+            font-size: 18px;
+            margin: 0 0 8px 0;
+        }
+
+        .exhibit-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .exhibit-time, .exhibit-location {
+            display: flex;
+            align-items: center;
+        }
+
+        .exhibit-desc {
+            line-height: 1.7;
+            font-size: 15px;
+            color: #333;
+        }
+
+        /* 收藏按钮 */
+        .collection-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+            .collection-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+            }
+
+        .collection-count {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            margin-left: 10px;
+            font-size: 14px;
+        }
+
+        /* 展品卡片收藏按钮 */
+        .card-collect-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            color: #ccc;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+            .card-collect-btn:hover {
+                background: white;
+                transform: scale(1.1);
+            }
+
+            .card-collect-btn.collected {
+                color: #e74c3c;
+                background: rgba(231,76,60,0.1);
+            }
+
+                .card-collect-btn.collected:hover {
+                    color: #c0392b;
+                }
+
+        /* 收藏弹窗 */
+        .collection-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+            .collection-modal.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 12px;
+            padding: 30px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .modal-header h2 {
+                color: #2c5282;
+                margin: 0;
+                font-size: 22px;
+            }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+            .close-modal:hover {
+                color: #333;
+            }
+
+        .collection-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .collection-item {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eee;
+            transition: all 0.3s;
+            width: calc(25% - 12px);
+            min-width: 180px;
+        }
+
+            .collection-item:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+                border-color: transparent;
+            }
+
+        .collection-item-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .collection-item-info {
+            padding: 15px;
+        }
+
+            .collection-item-info h4 {
+                margin: 0 0 8px 0;
+                font-size: 16px;
+                color: #333;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .collection-item-info p {
+                margin: 0;
+                font-size: 12px;
+                color: #666;
+            }
+
+        .empty-collection {
+            text-align: center;
+            padding: 50px 0;
+            color: #999;
+            width: 100%;
+        }
+
+            .empty-collection i {
+                font-size: 60px;
+                margin-bottom: 20px;
+                color: #eee;
+            }
+
+            .empty-collection p {
+                margin: 0;
+                font-size: 16px;
+            }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .exhibition-container {
+                flex-direction: column;
+            }
+
+            .exhibit-card {
+                width: 100%;
+            }
+
+            .exhibition-nav {
+                justify-content: center;
+            }
+
+            .collection-btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .collection-list {
+                flex-direction: column;
+            }
+
+            .collection-item {
+                width: 100%;
+            }
+
+            .collection-item-img {
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>苗绣数字展厅</h1>
+            <button class="back-btn" id="backToMap">返回地图</button>
+        </div>
+
+        <!-- 展厅分类导航 -->
+        <div class="exhibition-nav">
+            <div class="exhibition-tab active" data-category="ancient">历史珍品区</div>
+            <div class="exhibition-tab" data-category="modern">当代创新区</div>
+            <div class="exhibition-tab" data-category="life">生活应用区</div>
+        </div>
+
+        <!-- 展厅展品容器 -->
+        <div class="exhibition-container" id="exhibitionContent">
+            <!-- 历史珍品区展品 -->
+            <div class="exhibit-card" data-category="ancient" data-id="ancient1" data-name="清代苗绣背扇" data-img="images/exhibition/ancient1.jpg" data-time="清代晚期" data-location="贵州省民族博物馆">
+                <button class="card-collect-btn" data-id="ancient1">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/ancient1.jpg" alt="清代苗绣背扇" title="清代苗绣背扇（贵州省民族博物馆藏）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">清代苗绣背扇</h3>
+                        <p class="mask-desc">黔东南派代表作，采用绉绣+打籽绣技法，图案为蝴蝶妈妈与龙纹组合，体现苗族创世神话。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.58" data-lng="108.27" data-name="清代苗绣背扇产地">
+                            查看产地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">清代苗绣背扇</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">清代晚期</div>
+                        <div class="exhibit-location">贵州省民族博物馆</div>
+                    </div>
+                    <p class="exhibit-desc">该展品为黔东南苗族盛装背扇，长85cm，宽60cm，采用绉绣、打籽绣等多种针法，图案以蝴蝶妈妈为中心，周围环绕龙纹、花卉纹，色彩艳丽，工艺精湛，是研究清代苗绣的重要实物资料。</p>
+                </div>
+            </div>
+
+            <div class="exhibit-card" data-category="ancient" data-id="ancient2" data-name="民国苗绣围裙" data-img="images/exhibition/ancient2.jpg" data-time="民国二十年（1931年）" data-location="湘西州博物馆">
+                <button class="card-collect-btn" data-id="ancient2">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/ancient2.jpg" alt="民国苗绣围裙" title="民国苗绣围裙（湘西州博物馆藏）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">民国苗绣围裙</h3>
+                        <p class="mask-desc">湘西派代表作品，采用平绣技法，图案为几何纹样与花鸟组合，反映民国时期苗汉文化交融特点。</p>
+                        <button class="mask-btn locate-btn" data-lat="28.22" data-lng="109.71" data-name="民国苗绣围裙产地">
+                            查看产地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">民国苗绣围裙</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">民国二十年（1931年）</div>
+                        <div class="exhibit-location">湘西州博物馆</div>
+                    </div>
+                    <p class="exhibit-desc">湘西苗族女性日常服饰，长70cm，宽50cm，采用平绣、辫绣技法，图案为几何纹、花鸟纹，色彩以黑、红、白为主，风格简洁素雅，体现了湘西苗族与汉族文化的深度融合。</p>
+                </div>
+            </div>
+
+            <div class="exhibit-card" data-category="ancient" data-id="ancient3" data-name="清代马尾绣鞋面" data-img="images/exhibition/ancient3.jpg" data-time="清代中期" data-location="台江县非遗馆">
+                <button class="card-collect-btn" data-id="ancient3">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/ancient3.jpg" alt="清代马尾绣鞋面" title="清代马尾绣鞋面（台江县非遗馆藏）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">清代马尾绣鞋面</h3>
+                        <p class="mask-desc">黔东南派经典作品，马尾线打底，丝线覆盖，图案为鱼龙纹，是清代苗族贵族服饰的配套饰品。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.67" data-lng="108.37" data-name="清代马尾绣鞋面产地">
+                            查看产地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">清代马尾绣鞋面</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">清代中期</div>
+                        <div class="exhibit-location">台江县非遗馆</div>
+                    </div>
+                    <p class="exhibit-desc">苗族男性盛装鞋面，长25cm，宽10cm，采用马尾绣技法，以鱼龙纹为主题，马尾线打底增强立体感，丝线覆盖图案细节，工艺复杂，耗时15天完成，是清代苗族贵族身份的象征。</p>
+                </div>
+            </div>
+
+            <!-- 当代创新区展品（默认隐藏） -->
+            <div class="exhibit-card" data-category="modern" style="display: none;" data-id="modern1" data-name="苗绣装饰画《蝶舞》" data-img="images/exhibition/modern1.jpg" data-time="2022年" data-location="台江县苗绣传习所">
+                <button class="card-collect-btn" data-id="modern1">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/modern1.jpg" alt="苗绣装饰画《蝶舞》" title="苗绣装饰画《蝶舞》（潘玉珍作品）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">苗绣装饰画《蝶舞》</h3>
+                        <p class="mask-desc">当代创新作品，融合传统蝴蝶纹与现代构图，采用绉绣+打籽绣技法，适配现代家居装饰。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.67" data-lng="108.37" data-name="《蝶舞》创作地">
+                            查看创作地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">苗绣装饰画《蝶舞》</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">2022年</div>
+                        <div class="exhibit-location">台江县苗绣传习所</div>
+                    </div>
+                    <p class="exhibit-desc">当代苗绣创新代表作，尺寸50cm×50cm，由国家级传承人潘玉珍设计创作。作品以传统蝴蝶妈妈纹为基础，采用现代对称构图，色彩搭配更符合现代审美，既保留古法技艺，又适应现代家居装饰需求，获2023年中国非遗创新设计奖。</p>
+                </div>
+            </div>
+
+            <div class="exhibit-card" data-category="modern" style="display: none;" data-id="modern2" data-name="苗绣文创笔记本" data-img="images/exhibition/modern2.jpg" data-time="2023年" data-location="凯里市文创产业园">
+                <button class="card-collect-btn" data-id="modern2">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/modern2.jpg" alt="苗绣文创笔记本" title="苗绣文创笔记本（现代创新）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">苗绣文创笔记本</h3>
+                        <p class="mask-desc">融合传统苗绣纹样与现代文具设计，采用平绣技法，封面为简化花鸟纹，兼具实用性与文化性。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.57" data-lng="108.22" data-name="苗绣文创笔记本创作地">
+                            查看创作地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">苗绣文创笔记本</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">2023年</div>
+                        <div class="exhibit-location">凯里市文创产业园</div>
+                    </div>
+                    <p class="exhibit-desc">苗绣文创代表作品，尺寸14.8cm×21cm，封面采用平绣技法制作苗族传统花鸟纹样，内页为环保再生纸，配套苗绣书签。该产品入选2024年贵州文创精品名录，年销量超10万本，带动20余名绣娘稳定就业。</p>
+                </div>
+            </div>
+
+            <div class="exhibit-card" data-category="modern" style="display: none;" data-id="modern3" data-name="苗绣数字艺术屏" data-img="images/exhibition/modern3.jpg" data-time="2024年" data-location="贵阳数字文化产业园">
+                <button class="card-collect-btn" data-id="modern3">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/modern3.jpg" alt="苗绣数字艺术屏" title="苗绣数字艺术屏（科技融合）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">苗绣数字艺术屏</h3>
+                        <p class="mask-desc">科技与传统融合创新，将苗绣纹样数字化呈现，支持动态切换纹样，适配现代智能家居场景。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.57" data-lng="106.71" data-name="苗绣数字艺术屏研发地">
+                            查看研发地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">苗绣数字艺术屏</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">2024年</div>
+                        <div class="exhibit-location">贵阳数字文化产业园</div>
+                    </div>
+                    <p class="exhibit-desc">苗绣数字化创新产品，尺寸32英寸，内置100余种苗族传统纹样数据库，支持触控交互、语音控制，可动态展示苗绣纹样演变过程。产品融合了非遗数字化保护与现代智能家居理念，获2024年中国数字文化创意大赛金奖。</p>
+                </div>
+            </div>
+
+            <!-- 生活应用区展品（默认隐藏） -->
+            <div class="exhibit-card" data-category="life" style="display: none;" data-id="life1" data-name="苗绣丝巾" data-img="images/exhibition/life1.jpg" data-time="2023年" data-location="凯里市苗绣产业园区">
+                <button class="card-collect-btn" data-id="life1">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/life1.jpg" alt="苗绣丝巾" title="苗绣丝巾（现代生活应用）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">苗绣丝巾</h3>
+                        <p class="mask-desc">生活应用类产品，采用平绣技法，图案为简化龙纹，材质为真丝，兼具实用性与艺术性。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.67" data-lng="108.37" data-name="苗绣丝巾生产地">
+                            查看生产地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">苗绣丝巾</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">2023年</div>
+                        <div class="exhibit-location">凯里市苗绣产业园区</div>
+                    </div>
+                    <p class="exhibit-desc">苗绣生活化创新产品，尺寸180cm×90cm，材质为100%桑蚕丝，采用平绣技法，图案为简化的苗族龙纹，色彩柔和，适合日常佩戴与礼品赠送。该产品通过电商平台销往全国，年销售额超500万元，带动50余名绣娘就业。</p>
+                </div>
+            </div>
+
+            <div class="exhibit-card" data-category="life" style="display: none;" data-id="life2" data-name="苗绣茶具套装" data-img="images/exhibition/life2.jpg" data-time="2023年" data-location="雷山县非遗工坊">
+                <button class="card-collect-btn" data-id="life2">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/life2.jpg" alt="苗绣茶具套装" title="苗绣茶具套装（生活应用）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">苗绣茶具套装</h3>
+                        <p class="mask-desc">生活应用类产品，陶瓷茶具搭配苗绣杯垫、茶席，采用辫绣技法，图案为山水纹，适配中式生活场景。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.38" data-lng="108.06" data-name="苗绣茶具套装生产地">
+                            查看生产地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">苗绣茶具套装</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">2023年</div>
+                        <div class="exhibit-location">雷山县非遗工坊</div>
+                    </div>
+                    <p class="exhibit-desc">苗绣生活化创新产品，包含盖碗、品茗杯、茶盘及苗绣茶席、杯垫，茶席采用辫绣技法制作苗族山水纹样，面料为棉麻混纺，耐磨易清洗。产品结合了苗族传统刺绣与中式茶文化，成为文旅融合爆款产品，年销量超2万套。</p>
+                </div>
+            </div>
+
+            <div class="exhibit-card" data-category="life" style="display: none;" data-id="life3" data-name="苗绣抱枕套" data-img="images/exhibition/life3.jpg" data-time="2024年" data-location="丹寨县扶贫工坊">
+                <button class="card-collect-btn" data-id="life3">
+                    <i class="fa fa-heart" aria-hidden="true"></i>
+                </button>
+                <div class="exhibit-img">
+                    <img src="images/exhibition/life3.jpg" alt="苗绣抱枕套" title="苗绣抱枕套（生活应用）">
+                    <div class="exhibit-mask">
+                        <h3 class="mask-title">苗绣抱枕套</h3>
+                        <p class="mask-desc">生活应用类产品，棉麻面料搭配打籽绣技法，图案为花卉纹，适配现代家居软装场景。</p>
+                        <button class="mask-btn locate-btn" data-lat="26.27" data-lng="107.88" data-name="苗绣抱枕套生产地">
+                            查看生产地
+                        </button>
+                    </div>
+                </div>
+                <div class="exhibit-info">
+                    <h3 class="exhibit-name">苗绣抱枕套</h3>
+                    <div class="exhibit-meta">
+                        <div class="exhibit-time">2024年</div>
+                        <div class="exhibit-location">丹寨县扶贫工坊</div>
+                    </div>
+                    <p class="exhibit-desc">苗绣生活化创新产品，尺寸45cm×45cm，棉麻面料透气亲肤，采用打籽绣技法制作苗族传统花卉纹样，可拆洗设计，适配现代家居风格。该产品作为扶贫工坊主打产品，带动丹寨县80余名留守妇女居家就业，人均月增收2000元以上。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 收藏按钮 -->
+        <button class="collection-btn" id="collectionBtn">
+            我的收藏
+            <span class="collection-count" id="collectionCount">0</span>
+        </button>
+    </div>
+
+    <!-- 收藏弹窗 -->
+    <div class="collection-modal" id="collectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>我的收藏</h2>
+                <button class="close-modal" id="closeModal"><i class="fa fa-times" aria-hidden="true"></i></button>
+            </div>
+            <div class="collection-list" id="collectionList">
+                <!-- 收藏列表动态生成 -->
+                <div class="empty-collection" id="emptyCollection">
+                    <i class="fa fa-heart-o" aria-hidden="true"></i>
+                    <p>暂无收藏，快去收藏喜欢的展品吧~</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心交互逻辑 -->
+    <script>
+        // 初始化收藏数据（从localStorage读取）
+        let collectedItems = JSON.parse(localStorage.getItem('miaoEmbroideryCollections')) || [];
+        const collectionCountEl = $('#collectionCount');
+        const collectionModal = $('#collectionModal');
+        const collectionListEl = $('#collectionList');
+        const emptyCollectionEl = $('#emptyCollection');
+
+        // 更新收藏数量显示
+        function updateCollectionCount() {
+            collectionCountEl.text(collectedItems.length);
+        }
+
+        // 检查展品是否已收藏
+        function isItemCollected(itemId) {
+            return collectedItems.some(item => item.id === itemId);
+        }
+
+        // 更新展品卡片收藏状态
+        function updateCardCollectStatus() {
+            $('.card-collect-btn').each(function () {
+                const itemId = $(this).data('id');
+                if (isItemCollected(itemId)) {
+                    $(this).addClass('collected');
+                } else {
+                    $(this).removeClass('collected');
+                }
+            });
+        }
+
+        // 收藏/取消收藏展品
+        function toggleCollection(itemId) {
+            const itemIndex = collectedItems.findIndex(item => item.id === itemId);
+            const exhibitCard = $(`.exhibit-card[data-id="${itemId}"]`);
+
+            if (itemIndex > -1) {
+                // 取消收藏
+                collectedItems.splice(itemIndex, 1);
+                showToast('已取消收藏');
+            } else {
+                // 新增收藏
+                const itemData = {
+                    id: itemId,
+                    name: exhibitCard.data('name'),
+                    img: exhibitCard.data('img'),
+                    time: exhibitCard.data('time'),
+                    location: exhibitCard.data('location')
+                };
+                collectedItems.push(itemData);
+                showToast('收藏成功');
+            }
+
+            // 保存到localStorage
+            localStorage.setItem('miaoEmbroideryCollections', JSON.stringify(collectedItems));
+
+            // 更新UI
+            updateCollectionCount();
+            updateCardCollectStatus();
+            renderCollectionList();
+        }
+
+        // 渲染收藏列表
+        function renderCollectionList() {
+            if (collectedItems.length === 0) {
+                emptyCollectionEl.show();
+                return;
+            }
+
+            emptyCollectionEl.hide();
+            collectionListEl.empty();
+
+            collectedItems.forEach(item => {
+                const collectionItem = $(`
+                        <div class="collection-item" data-id="${item.id}">
+                            <img src="${item.img}" alt="${item.name}" class="collection-item-img">
+                            <div class="collection-item-info">
+                                <h4>${item.name}</h4>
+                                <p>${item.time} · ${item.location}</p>
+                            </div>
+                        </div>
+                    `);
+
+                // 点击收藏项跳转到对应展品（滚动到视图）
+                collectionItem.click(function () {
+                    const itemId = $(this).data('id');
+                    const exhibitCard = $(`.exhibit-card[data-id="${itemId}"]`);
+
+                    if (exhibitCard.length > 0) {
+                        // 切换到对应分类
+                        const category = exhibitCard.data('category');
+                        $(`.exhibition-tab[data-category="${category}"]`).click();
+
+                        // 滚动到展品
+                        $('html, body').animate({
+                            scrollTop: exhibitCard.offset().top - 100
+                        }, 500);
+
+                        // 高亮展品
+                        exhibitCard.css('box-shadow', '0 0 0 2px #e74c3c, 0 5px 15px rgba(0,0,0,0.1)');
+                        setTimeout(() => {
+                            exhibitCard.css('box-shadow', '');
+                        }, 2000);
+
+                        // 关闭弹窗
+                        collectionModal.removeClass('active');
+                    }
+                });
+
+                collectionListEl.append(collectionItem);
+            });
+        }
+
+        // 显示提示消息
+        function showToast(message) {
+            // 创建临时提示元素
+            const toast = $('<div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 4px; z-index: 9999; transition: all 0.3s;">' + message + '</div>');
+            $('body').append(toast);
+
+            // 3秒后移除
+            setTimeout(() => {
+                toast.fadeOut(300, function () {
+                    $(this).remove();
+                });
+            }, 1500);
+        }
+
+        // 初始化收藏功能
+        function initCollectionFeature() {
+            updateCollectionCount();
+            updateCardCollectStatus();
+            renderCollectionList();
+
+            // 展品卡片收藏按钮点击事件
+            $('.card-collect-btn').click(function (e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                const itemId = $(this).data('id');
+                toggleCollection(itemId);
+            });
+
+            // 双击展品卡片收藏（保留原功能）
+            $('.exhibit-card').dblclick(function () {
+                const itemId = $(this).data('id');
+                if (!isItemCollected(itemId)) {
+                    toggleCollection(itemId);
+                }
+            });
+
+            // 我的收藏按钮点击事件
+            $('#collectionBtn').click(function () {
+                collectionModal.addClass('active');
+            });
+
+            // 关闭收藏弹窗
+            $('#closeModal').click(function () {
+                collectionModal.removeClass('active');
+            });
+
+            // 点击弹窗外部关闭
+            collectionModal.click(function (e) {
+                if (e.target === collectionModal[0]) {
+                    collectionModal.removeClass('active');
+                }
+            });
+        }
+
+        // 展厅分类切换
+        $(".exhibition-tab").click(function () {
+            const category = $(this).data("category");
+
+            // 更新导航栏激活状态
+            $(".exhibition-tab").removeClass("active");
+            $(this).addClass("active");
+
+            // 显示对应分类的展品
+            $(".exhibit-card").hide();
+            $(`.exhibit-card[data-category="${category}"]`).show();
+        });
+
+        // 返回地图按钮（修改：跳转至主页面default.html）
+        $("#backToMap").click(function () {
+            window.location.href = "Default.html";
+        });
+
+        // 定位展品产地（双向联动：跳转至主页面并传递定位参数）
+        $(".locate-btn").click(function () {
+            const lat = $(this).data("lat");
+            const lng = $(this).data("lng");
+            const name = $(this).data("name");
+            window.location.href = `Default.html?locate=true&lat=${lat}&lng=${lng}&name=${encodeURIComponent(name)}`;
+        });
+
+        // 初始化页面
+        $(function () {
+            initCollectionFeature();
+        });
+    </script>
+</body>
+</html>

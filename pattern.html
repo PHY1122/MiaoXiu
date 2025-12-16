@@ -1,0 +1,430 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苗绣图案文化释义 - 苗绣文化GIS系统</title>
+    <!-- 引入公共依赖（移除font-awesome图标库） -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- 页面样式 -->
+    <style>
+        /* 继承主系统风格 */
+        body {
+            margin: 0;
+            font-family: "微软雅黑", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c5282;
+            padding-bottom: 15px;
+        }
+
+            .header h1 {
+                color: #2c5282;
+                margin: 0;
+                font-size: 28px;
+            }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+            .back-btn:hover {
+                background: #1a365d;
+            }
+        /* 图案分类导航 */
+        .pattern-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .pattern-tab {
+            padding: 10px 20px;
+            background: #f0f7ff;
+            color: #2c5282;
+            border: 1px solid #e8f4f8;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+            .pattern-tab:hover {
+                background: #e8f4f8;
+            }
+
+            .pattern-tab.active {
+                background: #2c5282;
+                color: white;
+                border-color: #2c5282;
+            }
+        /* 图案卡片容器 */
+        .pattern-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .pattern-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            /* 关键修改：设置卡片为flex布局，垂直方向排列 */
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+            .pattern-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .pattern-img {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+            .pattern-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s;
+            }
+
+        .pattern-card:hover .pattern-img img {
+            transform: scale(1.05);
+        }
+
+        .pattern-info {
+            padding: 20px;
+            /* 关键修改：让信息区域自动填充空间，按钮被推到底部 */
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pattern-name {
+            color: #2c5282;
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+
+        .pattern-scene {
+            color: #666;
+            font-size: 14px;
+            margin: 0 0 15px 0;
+        }
+
+        .pattern-desc {
+            line-height: 1.8;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+            .pattern-desc strong {
+                color: #2c5282;
+            }
+
+        .pattern-geo {
+            line-height: 1.6;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .pattern-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+            font-size: 16px;
+            /* 关键修改：按钮自动靠底，实现所有按钮水平对齐 */
+            margin-top: auto;
+        }
+
+            .pattern-btn:hover {
+                background: #2c5282;
+            }
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .pattern-container {
+                grid-template-columns: 1fr;
+            }
+
+            .pattern-nav {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>苗绣图案文化释义</h1>
+            <button class="back-btn" id="backToMap">返回地图</button>
+        </div>
+
+        <!-- 仅保留分类位置调整，无图标 -->
+        <div class="pattern-nav">
+            <div class="pattern-tab active" data-category="lucky">吉祥寓意</div>
+            <div class="pattern-tab" data-category="ancestor">祖先记忆</div>
+            <div class="pattern-tab" data-category="life">生活场景</div>
+            <div class="pattern-tab" data-category="nature">自然崇拜</div>
+        </div>
+
+        <!-- 移除所有图标，保留排版和内容 -->
+        <div class="pattern-container" id="patternContent">
+            <!-- 吉祥寓意类图案（默认显示） -->
+            <div class="pattern-card" data-category="lucky">
+                <div class="pattern-img">
+                    <img src="images/pattern/xianglian.jpg" alt="缠枝莲纹" title="缠枝莲纹（黔中派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">缠枝莲纹</h3>
+                    <p class="pattern-scene">常见场景：婚嫁服饰、被褥、门帘</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以连绵不断的莲枝、莲花为主体，莲花象征纯洁，缠枝寓意“生生不息、连绵不绝”，整体图案表达对婚姻美满、家庭和睦、子孙绵延的美好期盼，是苗族婚嫁仪式中的核心吉祥图案。</p>
+                    <p class="pattern-geo">地理关联：广泛分布在贵州中部、四川南部苗族聚居区，受汉族传统文化影响较深，图案中莲花的造型融合了汉苗艺术特色，是文化交融的见证。</p>
+                    <button class="pattern-btn locate-btn" data-lat="26.59" data-lng="106.66" data-name="缠枝莲纹融合区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="lucky">
+                <div class="pattern-img">
+                    <img src="images/pattern/longfeng.jpg" alt="龙凤呈祥纹" title="龙凤呈祥纹（湘西南派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">龙凤呈祥纹</h3>
+                    <p class="pattern-scene">常见场景：盛装披风、婚庆帐幔、寿衣</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>苗族龙凤呈祥纹以龙、凤与花卉、云纹组合，龙象征守护，凤象征祥瑞，二者呼应寓意“阴阳和谐、福禄双全”，既用于婚嫁场景祝福新人，也用于寿衣装饰祈求福寿绵长，是苗族最具代表性的吉祥图案之一。</p>
+                    <p class="pattern-geo">地理关联：主要分布在湖南邵阳、广西融水等湘桂交界苗族区，当地苗族与汉族、壮族长期杂居，图案在保留苗族造型特色的同时，吸收了汉族“龙凤呈祥”的文化内涵。</p>
+                    <button class="pattern-btn locate-btn" data-lat="27.24" data-lng="110.56" data-name="龙凤呈祥纹文化区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="lucky">
+                <div class="pattern-img">
+                    <img src="images/pattern/baixiang.jpg" alt="百祥如意纹" title="百祥如意纹（滇南派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">百祥如意纹</h3>
+                    <p class="pattern-scene">常见场景：儿童虎头帽、老人衣领、荷包</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>融合蝙蝠（福）、如意、石榴（多子）、桂花（贵）等多种吉祥元素，以几何纹样串联成整体，寓意“集百福、纳千祥、事事如意”，常用于老人和儿童服饰，传递对长辈健康、晚辈聪慧的双重祝福。</p>
+                    <p class="pattern-geo">地理关联：集中分布在云南红河、文山等滇南苗族区，当地民族文化多元，图案中融入了彝族、哈尼族的吉祥符号，形成独特的“百祥”组合风格。</p>
+                    <button class="pattern-btn locate-btn" data-lat="23.36" data-lng="103.43" data-name="百祥如意纹发源地">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <!-- 自然崇拜类图案（默认隐藏） -->
+            <div class="pattern-card" data-category="nature" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/hudie.jpg" alt="蝴蝶妈妈纹" title="蝴蝶妈妈纹（黔东南派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">蝴蝶妈妈纹</h3>
+                    <p class="pattern-scene">常见场景：儿童服饰、背扇、围裙</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>蝴蝶妈妈是苗族创世神话的核心，传说苗族的祖先源于蝴蝶卵。图案以飞舞的蝴蝶为主体，翅膀上点缀花卉、几何纹样，象征生命起源与繁衍，常用于儿童服饰，寓意护佑孩子健康成长。</p>
+                    <p class="pattern-geo">地理关联：主要分布在贵州黔东南地区，因当地保留了最完整的苗族创世史诗《苗族古歌》，图案细节与史诗记载高度契合。</p>
+                    <button class="pattern-btn locate-btn" data-lat="26.58" data-lng="108.27" data-name="蝴蝶妈妈纹发源地">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="nature" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/long.jpg" alt="苗绣龙纹" title="苗绣龙纹（台江派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">苗绣龙纹</h3>
+                    <p class="pattern-scene">常见场景：盛装衣襟、头巾、背扇边缘</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>苗族龙纹不同于汉族龙的威严，多以“鱼龙”“蛇龙”“水牛龙”等形式出现，龙身常由鱼、蛙、蛇等元素组成，象征对雨水的祈求与对自然的敬畏，是农耕文化的重要体现。</p>
+                    <p class="pattern-geo">地理关联：广泛分布在贵州、湖南、云南苗族聚居区，其中贵州台江的龙纹最具特色，图案中融入梯田、鱼、蛙等元素，体现山区水乡的地理特征。</p>
+                    <button class="pattern-btn locate-btn" data-lat="26.67" data-lng="108.37" data-name="苗绣龙纹核心区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="nature" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/wa.jpg" alt="蛙纹" title="蛙纹（湘西派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">蛙纹</h3>
+                    <p class="pattern-scene">常见场景：童装、鞋面、枕头绣片</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>蛙类繁殖能力强，且与水稻种植密切相关（青蛙能捕捉害虫保护庄稼），图案以简洁的蛙形为主体，象征丰收与多子多福，是苗族对生殖崇拜与农耕丰收的双重期盼。</p>
+                    <p class="pattern-geo">地理关联：主要分布在湖南湘西、贵州黔东南等水稻种植区，图案风格随地域变化，湘西蛙纹简洁抽象，黔东南蛙纹繁复华丽。</p>
+                    <button class="pattern-btn locate-btn" data-lat="28.22" data-lng="109.71" data-name="蛙纹文化区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <!-- 祖先记忆类图案（默认隐藏） -->
+            <div class="pattern-card" data-category="ancestor" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/qianxi.jpg" alt="迁徙路线纹" title="迁徙路线纹（黔西北派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">迁徙路线纹</h3>
+                    <p class="pattern-scene">常见场景：盛装背扇、衣襟、头巾</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以连续的几何折线、山脉、河流图案，模拟苗族迁徙途中的地理环境，记录族群从黄河流域迁徙至西南山区的历史，是苗族“无文字民族”传承历史的重要方式。</p>
+                    <p class="pattern-geo">地理关联：主要分布在贵州黔西北、云南文山等苗族迁徙重要节点地区，图案复杂度与迁徙路线长度相关，路线越远图案越繁复。</p>
+                    <button class="pattern-btn locate-btn" data-lat="27.01" data-lng="105.78" data-name="迁徙路线纹发源地">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="ancestor" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/zuxianlingwei.jpg" alt="祖先灵位纹" title="祖先灵位纹（黔西南派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">祖先灵位纹</h3>
+                    <p class="pattern-scene">常见场景：祭祀服饰、神龛挂饰、长老披风</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以抽象的牌位造型为核心，搭配云纹、火焰纹，象征对祖先的敬仰与缅怀。苗族认为祖先灵魂会护佑族群平安，图案常用于祭祀仪式相关服饰，是连接现世与先祖的精神纽带，体现“敬天法祖”的传统理念。</p>
+                    <p class="pattern-geo">地理关联：主要分布在贵州黔西南、云南曲靖苗族聚居区，当地保留了完整的祖先祭祀礼仪，图案造型与传统灵位形制高度一致，是祭祀文化的视觉延伸。</p>
+                    <button class="pattern-btn locate-btn" data-lat="25.09" data-lng="104.92" data-name="祖先灵位纹文化核心区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="ancestor" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/guchengyizhi.jpg" alt="古城遗址纹" title="古城遗址纹（湘西北派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">古城遗址纹</h3>
+                    <p class="pattern-scene">常见场景：盛装衣襟、头巾、丧葬寿衣</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以几何线条勾勒古代城郭、寨门、烽火台的轮廓，记录苗族祖先曾经居住的古城遗址，传递“不忘故土”的族群记忆。图案中城郭与道路相连，象征族群虽迁徙但根脉永续，是对故土家园的集体怀念。</p>
+                    <p class="pattern-geo">地理关联：集中分布在湖南张家界、重庆秀山等湘西北苗族区，当地流传着祖先在武陵山区筑城而居的传说，图案细节与考古发现的古代苗寨遗址布局相契合。</p>
+                    <button class="pattern-btn locate-btn" data-lat="29.11" data-lng="110.48" data-name="古城遗址纹发源地">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <!-- 生活场景类图案（默认隐藏） -->
+            <div class="pattern-card" data-category="life" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/tilian.jpg" alt="梯田农耕纹" title="梯田农耕纹（黔东南派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">梯田农耕纹</h3>
+                    <p class="pattern-scene">常见场景：成人盛装、腰带、桌布</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以层叠的几何图形模拟苗族聚居区的梯田景观，搭配农耕人物、耕牛、禾苗等元素，再现“春种秋收”的农耕生活，体现苗族对土地的依赖与感恩，是山区农耕文明的视觉记录。</p>
+                    <p class="pattern-geo">地理关联：集中分布在贵州黔东南雷公山周边，当地梯田密集、农耕历史悠久，图案中的梯田层级与实际地理景观高度吻合，是地域生活的真实写照。</p>
+                    <button class="pattern-btn locate-btn" data-lat="26.38" data-lng="108.12" data-name="梯田农耕纹核心区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="life" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/chuandong.jpg" alt="穿针引线纹" title="穿针引线纹（湘西派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">穿针引线纹</h3>
+                    <p class="pattern-scene">常见场景：袖口、裤脚、荷包、鞋垫</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以交叉的丝线、针线、布料纹样为核心，再现苗族妇女刺绣、织布的生活场景，象征勤劳能干与女红技艺的传承，是苗族对女性美德的赞颂，常用于婚嫁服饰，寓意新娘心灵手巧。</p>
+                    <p class="pattern-geo">地理关联：主要分布在湖南湘西、重庆彭水等苗族聚居区，当地苗族女性刺绣技艺世代相传，图案细节还原了传统织布机、绣花针的形态特征。</p>
+                    <button class="pattern-btn locate-btn" data-lat="28.45" data-lng="109.18" data-name="穿针引线纹文化区">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+
+            <div class="pattern-card" data-category="life" style="display: none;">
+                <div class="pattern-img">
+                    <img src="images/pattern/sheep.jpg" alt="牧放牛羊纹" title="牧放牛羊纹（滇东北派）">
+                </div>
+                <div class="pattern-info">
+                    <h3 class="pattern-name">牧放牛羊纹</h3>
+                    <p class="pattern-scene">常见场景：男性马甲、披风、帐篷装饰</p>
+                    <p class="pattern-desc"><strong>文化释义：</strong>以简洁的牛羊轮廓、人物剪影和草原线条构成，记录苗族传统畜牧生活场景，象征家畜兴旺、生活富足，体现了山区畜牧与农耕结合的生产方式，是苗族生活智慧的体现。</p>
+                    <p class="pattern-geo">地理关联：主要分布在云南昭通、贵州威宁等高原地区，当地地势开阔、适合畜牧，图案中牛羊的形态、草原的线条均与地域自然环境高度适配。</p>
+                    <button class="pattern-btn locate-btn" data-lat="27.22" data-lng="103.83" data-name="牧放牛羊纹发源地">
+                        在地图中查看起源地
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 交互逻辑完全保留，无任何改动 -->
+    <script>
+        // 图案分类切换
+        $(".pattern-tab").click(function () {
+            const category = $(this).data("category");
+
+            // 更新导航栏激活状态
+            $(".pattern-tab").removeClass("active");
+            $(this).addClass("active");
+
+            // 显示对应分类的图案卡片
+            $(".pattern-card").hide();
+            $(`.pattern-card[data-category="${category}"]`).show();
+        });
+
+        // 返回地图按钮
+        $("#backToMap").click(function () {
+            window.location.href = "Default.html";
+        });
+
+        // 定位到地图按钮
+        $(".locate-btn").click(function () {
+            const lat = $(this).data("lat");
+            const lng = $(this).data("lng");
+            const name = $(this).data("name");
+            window.location.href = `Default.html?locate=true&lat=${lat}&lng=${lng}&name=${encodeURIComponent(name)}`;
+        });
+    </script>
+</body>
+</html>

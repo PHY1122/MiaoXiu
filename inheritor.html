@@ -1,0 +1,432 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>非遗传承人故事 - 苗绣文化GIS系统</title>
+    <!-- 引入公共依赖 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- 页面样式 -->
+    <style>
+        /* 继承主系统风格 */
+        body {
+            margin: 0;
+            font-family: "微软雅黑", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c5282;
+            padding-bottom: 15px;
+        }
+
+            .header h1 {
+                color: #2c5282;
+                margin: 0;
+                font-size: 28px;
+            }
+
+        .back-btn {
+            padding: 8px 20px;
+            background: #2c5282;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+            .back-btn:hover {
+                background: #1a365d;
+            }
+
+            .back-btn i {
+                margin-right: 8px;
+            }
+
+        /* 传承人头部信息 */
+        .inheritor-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .inheritor-photo {
+            width: 300px;
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+            .inheritor-photo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .inheritor-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .inheritor-name {
+            color: #2c5282;
+            font-size: 32px;
+            margin: 0 0 10px 0;
+        }
+
+        .inheritor-title {
+            color: #4a6fa5;
+            font-size: 18px;
+            margin: 0 0 25px 0;
+            font-style: italic;
+        }
+
+        .inheritor-bio {
+            line-height: 2.0;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+            .inheritor-bio strong {
+                color: #2c5282;
+            }
+
+        .location-btn {
+            padding: 12px 25px;
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s;
+            font-size: 16px;
+        }
+
+            .location-btn:hover {
+                background: #2c5282;
+            }
+
+            .location-btn i {
+                margin-right: 10px;
+            }
+
+        /* 时间线样式 */
+        .timeline {
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .timeline-title {
+            color: #2c5282;
+            font-size: 22px;
+            margin: 0 0 30px 0;
+            display: flex;
+            align-items: center;
+        }
+
+            .timeline-title i {
+                margin-right: 10px;
+                color: #4a6fa5;
+            }
+
+        .timeline-list {
+            position: relative;
+            padding-left: 40px;
+        }
+
+            .timeline-list::before {
+                content: "";
+                position: absolute;
+                left: 10px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: #e8f4f8;
+            }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+            .timeline-item:last-child {
+                margin-bottom: 0;
+            }
+
+        .timeline-dot {
+            content: "";
+            position: absolute;
+            left: -30px;
+            top: 5px;
+            width: 20px;
+            height: 20px;
+            background: #2c5282;
+            border-radius: 50%;
+            border: 4px solid #f0f7ff;
+        }
+
+        .timeline-year {
+            color: #2c5282;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 0 0 10px 0;
+        }
+
+        .timeline-content {
+            line-height: 1.8;
+            font-size: 16px;
+            color: #333;
+        }
+
+        /* 代表作品样式 */
+        .works-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .works-title {
+            color: #2c5282;
+            font-size: 22px;
+            margin: 0 0 30px 0;
+            display: flex;
+            align-items: center;
+        }
+
+            .works-title i {
+                margin-right: 10px;
+                color: #4a6fa5;
+            }
+
+        .works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .work-card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+            .work-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .work-img {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+            .work-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform 0.5s;
+            }
+
+        .work-card:hover .work-img img {
+            transform: scale(1.05);
+        }
+
+        .work-info {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .work-name {
+            color: #2c5282;
+            font-size: 18px;
+            margin: 0 0 5px 0;
+        }
+
+        .work-desc {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .inheritor-header {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .inheritor-photo {
+                width: 100%;
+                max-width: 300px;
+                height: auto;
+            }
+
+            .works-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fa fa-user-circle" aria-hidden="true"></i> 非遗传承人故事</h1>
+            <button class="back-btn" id="backToMap"><i class="fa fa-arrow-left" aria-hidden="true"></i> 返回地图</button>
+        </div>
+
+        <!-- 传承人头部信息 -->
+        <div class="inheritor-header">
+            <div class="inheritor-photo">
+                <img src="images/inheritor/panyuzhen.jpg" alt="潘玉珍" title="国家级非遗传承人潘玉珍">
+            </div>
+            <div class="inheritor-info">
+                <h2 class="inheritor-name">潘玉珍</h2>
+                <p class="inheritor-title">国家级非物质文化遗产（苗绣）代表性传承人</p>
+                <p class="inheritor-bio">
+                    潘玉珍，1963年出生于贵州台江县施洞镇，是黔东南派苗绣的核心传承人。她12岁跟随祖母学习苗绣，精通绉绣、马尾绣、打籽绣等多种古法针法，从艺40余年，始终致力于苗绣技艺的传承与创新。<br><br>
+                    作为施洞苗绣的领军人物，潘玉珍不仅完整掌握了濒临失传的“打籽绣”技法，还创新性地将现代设计理念融入传统苗绣，开发出围巾、包包、装饰画等多元化产品，让古老技艺适应现代生活。<br><br>
+                    她先后培养了50余名徒弟，建立苗绣传习所，免费开展培训课程，带动当地百余位苗族妇女就业增收。2018年，她的作品《百鸟衣》入选“中国非遗博览会”，成为苗绣文化走向世界的重要名片。
+                </p>
+                <button class="location-btn" id="locateInheritor" data-lat="26.67" data-lng="108.37" data-name="潘玉珍传习所">
+                    <i class="fa fa-map-marker" aria-hidden="true"></i> 定位传承人所在传习所
+                </button>
+            </div>
+        </div>
+
+        <!-- 传承人时间线 -->
+        <div class="timeline">
+            <h3 class="timeline-title"><i class="fa fa-clock-o" aria-hidden="true"></i> 传承人生平时间线</h3>
+            <div class="timeline-list">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <h4 class="timeline-year">1975年</h4>
+                    <p class="timeline-content">12岁跟随祖母学习苗绣基础针法，开始接触传统图案的绣制，展现出对苗绣的浓厚兴趣。</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <h4 class="timeline-year">1990年</h4>
+                    <p class="timeline-content">创立个人绣坊，开始规模化传承苗绣技艺，带动当地10余名苗族妇女就业，绣品销往周边地区。</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <h4 class="timeline-year">2008年</h4>
+                    <p class="timeline-content">被评为国家级非物质文化遗产（苗绣）代表性传承人，专注于古法针法的整理与记录，出版《施洞苗绣技法》。</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <h4 class="timeline-year">2015年</h4>
+                    <p class="timeline-content">创新推出“苗绣+现代设计”系列产品，将传统蝴蝶纹、龙纹融入围巾、包包等日用品，拓宽苗绣应用场景。</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <h4 class="timeline-year">2020年</h4>
+                    <p class="timeline-content">建立台江县苗绣传习所，免费开展培训课程，每年培养20余名年轻绣娘，让古法技艺得以系统传承。</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <h4 class="timeline-year">2023年</h4>
+                    <p class="timeline-content">带领徒弟参与“中国-东盟非遗博览会”，苗绣作品获金奖，推动苗绣文化走向国际市场。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代表作品 -->
+        <div class="works-section">
+            <h3 class="works-title"><i class="fa fa-trophy" aria-hidden="true"></i> 代表性作品</h3>
+            <div class="works-grid">
+                <div class="work-card" data-lat="26.67" data-lng="108.37" data-name="《百鸟衣》创作地">
+                    <div class="work-img">
+                        <img src="images/work/bainiaoyi.jpg" alt="《百鸟衣》" title="《百鸟衣》（2018年）">
+                    </div>
+                    <div class="work-info">
+                        <h4 class="work-name">《百鸟衣》</h4>
+                        <p class="work-desc">采用绉绣+马尾绣技法，以百鸟朝凤为主题，耗时3个月完成，入选中国非遗博览会。</p>
+                    </div>
+                </div>
+                <div class="work-card" data-lat="26.67" data-lng="108.37" data-name="《马尾绣背扇》创作地">
+                    <div class="work-img">
+                        <img src="images/work/maweixiu.jpg" alt="《马尾绣背扇》" title="《马尾绣背扇》（2020年）">
+                    </div>
+                    <div class="work-info">
+                        <h4 class="work-name">《马尾绣背扇》</h4>
+                        <p class="work-desc">传统施洞背扇样式，以蝴蝶妈妈、苗族迁徙路线为图案，马尾线打底，丝线覆盖，工艺精湛。</p>
+                    </div>
+                </div>
+                <div class="work-card" data-lat="26.67" data-lng="108.37" data-name="《打籽绣披肩》创作地">
+                    <div class="work-img">
+                        <img src="images/work/dazixiu.jpg" alt="《打籽绣披肩》" title="《打籽绣披肩》（2015年）">
+                    </div>
+                    <div class="work-info">
+                        <h4 class="work-name">《打籽绣披肩》</h4>
+                        <p class="work-desc">恢复濒临失传的打籽绣技法，以花卉、几何纹为主题，颗粒饱满，立体感强，获省级工艺奖。</p>
+                    </div>
+                </div>
+                <div class="work-card" data-lat="26.67" data-lng="108.37" data-name="《现代苗绣包包》创作地">
+                    <div class="work-img">
+                        <img src="images/work/modern.jpg" alt="《现代苗绣包包》" title="《现代苗绣包包》（2022年）">
+                    </div>
+                    <div class="work-info">
+                        <h4 class="work-name">《现代苗绣包包》</h4>
+                        <p class="work-desc">融合苗绣龙纹与现代包袋设计，采用头层牛皮与蚕丝线，实用性与艺术性兼具，畅销国内外。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心交互逻辑 -->
+    <script>
+        // 返回地图按钮（修改：跳转至主页面Default.aspx，与主页面文件名一致）
+        $("#backToMap").click(function () {
+            window.location.href = "Default.html";
+        });
+
+        // 定位传承人传习所（修改：跳转路径改为Default.aspx，确保参数正确传递）
+        $("#locateInheritor").click(function () {
+            const lat = $(this).data("lat");
+            const lng = $(this).data("lng");
+            const name = $(this).data("name");
+            window.location.href = `Default.html?locate=true&lat=${lat}&lng=${lng}&name=${encodeURIComponent(name)}`;
+        });
+
+        // 作品卡片点击定位（修改：跳转路径改为Default.aspx，保持双向联动一致）
+        $(".work-card").click(function () {
+            const lat = $(this).data("lat");
+            const lng = $(this).data("lng");
+            const name = $(this).data("name");
+            window.location.href = `Default.html?locate=true&lat=${lat}&lng=${lng}&name=${encodeURIComponent(name)}`;
+        });
+    </script>
+</body>
+</html>

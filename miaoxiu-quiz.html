@@ -1,0 +1,3211 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>苗绣文化答题 - 苗绣文化GIS系统</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        /* 基础重置与全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            margin: 0;
+            font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
+            color: #2d3748;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* 苗绣背景元素 */
+        .embroidery-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            opacity: 0.08;
+        }
+
+        .embroidery-pattern {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.3;
+        }
+
+        .pattern-1 {
+            width: 150px;
+            height: 150px;
+            top: 10%;
+            left: 5%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50,5 L65,40 L95,40 L70,60 L80,95 L50,75 L20,95 L30,60 L5,40 L35,40 Z' fill='%232c5282'/%3E%3C/svg%3E");
+        }
+
+        .pattern-2 {
+            width: 120px;
+            height: 120px;
+            bottom: 15%;
+            right: 8%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50,10 C75,10 95,30 95,55 C95,80 75,100 50,100 C25,100 5,80 5,55 C5,30 25,10 50,10 Z' fill='none' stroke='%2338a169' stroke-width='2'/%3E%3Ccircle cx='50' cy='55' r='20' fill='%23ffd166'/%3E%3C/svg%3E");
+        }
+
+        .pattern-3 {
+            width: 100px;
+            height: 100px;
+            top: 20%;
+            right: 15%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M20,50 Q50,20 80,50 Q50,80 20,50 Z' fill='%239f7aea'/%3E%3Ccircle cx='50' cy='50' r='10' fill='white'/%3E%3C/svg%3E");
+        }
+
+        .pattern-4 {
+            width: 130px;
+            height: 130px;
+            bottom: 25%;
+            left: 10%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M30,30 L70,30 L85,50 L70,70 L30,70 L15,50 Z' fill='%23ed8936'/%3E%3C/svg%3E");
+        }
+
+        .embroidery-border {
+            position: fixed;
+            border: 2px solid rgba(44, 82, 130, 0.1);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .border-top {
+            top: 76px;
+            left: 20px;
+            right: 20px;
+            height: 0;
+            border-top: 2px dashed rgba(66, 153, 225, 0.2);
+        }
+
+        .border-bottom {
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            height: 0;
+            border-bottom: 2px dashed rgba(56, 161, 105, 0.2);
+        }
+
+        .border-left {
+            top: 96px;
+            bottom: 40px;
+            left: 20px;
+            width: 0;
+            border-left: 2px dashed rgba(159, 122, 234, 0.2);
+        }
+
+        .border-right {
+            top: 96px;
+            bottom: 40px;
+            right: 20px;
+            width: 0;
+            border-right: 2px dashed rgba(237, 137, 54, 0.2);
+        }
+
+        /* 加载动画 */
+        .loader-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+            .loader-container.hide {
+                opacity: 0;
+                visibility: hidden;
+            }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f0f4f8;
+            border-top: 5px solid #2c5282;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: relative;
+        }
+
+            .loader::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 60px;
+                height: 60px;
+                border: 2px dashed #4299e1;
+                border-radius: 50%;
+                animation: spin-reverse 2s linear infinite;
+            }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin-reverse {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(-360deg);
+            }
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            width: 100%;
+            height: 76px;
+            background: linear-gradient(135deg, #2c5282, #3b5a8c);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+            z-index: 100;
+        }
+
+        .nav-title {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-right {
+            margin-left: auto;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+
+            .nav-btn:hover {
+                background: rgba(255,255,255,0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(0,0,0,0.18);
+            }
+
+        /* 主体内容容器 */
+        .main-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+            .main-container.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        /* 答题头部信息 */
+        .quiz-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+            .quiz-header::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, #2c5282, #4299e1, #38a169, #ffd166);
+            }
+
+            .quiz-header h1 {
+                color: #2c5282;
+                font-size: 32px;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 15px;
+            }
+
+            .quiz-header p {
+                color: #4a5568;
+                font-size: 18px;
+                margin-bottom: 20px;
+                max-width: 700px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+        /* 答题状态信息 */
+        .quiz-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 0 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 25px;
+            background: rgba(247, 250, 252, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .timer {
+            color: #e53e3e;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .score {
+            color: #38a169;
+            font-size: 18px;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(237, 242, 247, 0.8);
+            border-radius: 4px;
+            margin: 10px 0 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4299e1, #38a169);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        /* 主内容区域 - 两栏布局 */
+        .content-wrapper {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 992px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+        }
+
+        /* 左侧答题区域 */
+        .quiz-section {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        /* 题目卡片 */
+        .question-card {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+            .question-card.active {
+                display: block;
+            }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-tag {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .tag-culture {
+            background: linear-gradient(135deg, #4299e1, #2c5282);
+        }
+
+        .tag-skill {
+            background: linear-gradient(135deg, #38a169, #22543d);
+        }
+
+        .tag-heritage {
+            background: linear-gradient(135deg, #9f7aea, #553c9a);
+        }
+
+        .tag-material {
+            background: linear-gradient(135deg, #ed8936, #c05621);
+        }
+
+        .tag-history {
+            background: linear-gradient(135deg, #ed64a6, #b83280);
+        }
+
+        .tag-pattern {
+            background: linear-gradient(135deg, #68d391, #38a169);
+        }
+
+        .question-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #2c5282;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .question-type {
+            font-size: 16px;
+            color: #718096;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+
+        /* 选项样式 */
+        .options-list {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .option-item {
+            margin-bottom: 12px;
+            padding: 16px 20px;
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+
+            .option-item::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 4px;
+                height: 100%;
+                background: transparent;
+                transition: background 0.3s ease;
+            }
+
+            .option-item:hover {
+                background: rgba(247, 250, 252, 0.9);
+                border-color: #cbd5e0;
+                transform: translateX(5px);
+            }
+
+            .option-item.selected {
+                background: rgba(232, 244, 248, 0.9);
+                border-color: #4299e1;
+                box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+            }
+
+                .option-item.selected::after {
+                    background: #4299e1;
+                }
+
+            .option-item.correct {
+                background: rgba(240, 248, 251, 0.9);
+                border-color: #38a169;
+            }
+
+                .option-item.correct::after {
+                    background: #38a169;
+                }
+
+            .option-item.incorrect {
+                background: rgba(254, 247, 251, 0.9);
+                border-color: #e53e3e;
+            }
+
+                .option-item.incorrect::after {
+                    background: #e53e3e;
+                }
+
+        .option-letter {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: #e2e8f0;
+            color: #4a5568;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            flex-shrink: 0;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .option-item.selected .option-letter {
+            background: #4299e1;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .option-item.correct .option-letter {
+            background: #38a169;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .option-item.incorrect .option-letter {
+            background: #e53e3e;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .option-icon {
+            margin-left: auto;
+            font-size: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            color: inherit;
+        }
+
+        .option-item.correct .option-icon {
+            color: #38a169;
+            opacity: 1;
+        }
+
+        .option-item.incorrect .option-icon {
+            color: #e53e3e;
+            opacity: 1;
+        }
+
+        /* 提示按钮 */
+        .hint-btn {
+            padding: 10px 20px;
+            background: rgba(240, 248, 251, 0.9);
+            color: #2c5282;
+            border: 2px solid rgba(232, 244, 248, 0.8);
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+        }
+
+            .hint-btn:hover:not(:disabled) {
+                background: rgba(232, 244, 248, 0.9);
+                border-color: #4299e1;
+                transform: translateY(-2px);
+            }
+
+            .hint-btn:disabled {
+                background: rgba(247, 250, 252, 0.9);
+                color: #a0aec0;
+                cursor: not-allowed;
+                border-color: rgba(237, 242, 247, 0.8);
+            }
+
+        .hint-content {
+            padding: 15px;
+            background: rgba(247, 250, 252, 0.9);
+            border-left: 4px solid #4299e1;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+            display: none;
+        }
+
+            .hint-content.show {
+                display: block;
+                animation: slideIn 0.3s ease;
+            }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 解析样式 */
+        .explanation {
+            padding: 20px;
+            background: rgba(247, 250, 252, 0.9);
+            border-radius: 10px;
+            display: none;
+            border-left: 4px solid #2c5282;
+            backdrop-filter: blur(5px);
+        }
+
+            .explanation.show {
+                display: block;
+                animation: expand 0.5s ease;
+            }
+
+        @keyframes expand {
+            from {
+                opacity: 0;
+                max-height: 0;
+                padding: 0 20px;
+            }
+
+            to {
+                opacity: 1;
+                max-height: 500px;
+            }
+        }
+
+        .explanation-title {
+            font-weight: 600;
+            color: #2c5282;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .explanation-content {
+            color: #4a5568;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        /* 右侧排行榜和错题回顾区域 */
+        .rank-section {
+            width: 350px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        @media (max-width: 992px) {
+            .rank-section {
+                width: 100%;
+            }
+        }
+
+        .rank-container, .mistakes-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 100px;
+        }
+
+        .mistakes-container {
+            position: relative;
+            top: 0;
+        }
+
+        .rank-title, .mistakes-title {
+            font-size: 24px;
+            color: #2c5282;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(226, 232, 240, 0.8);
+            text-align: center;
+            position: relative;
+        }
+
+            .rank-title::after, .mistakes-title::after {
+                content: "";
+                position: absolute;
+                bottom: -2px;
+                left: 25%;
+                width: 50%;
+                height: 2px;
+                background: linear-gradient(90deg, transparent, #4299e1, transparent);
+            }
+
+        .mistakes-title {
+            color: #e53e3e;
+        }
+
+        .rank-list, .mistakes-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .rank-item, .mistake-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: rgba(247, 250, 252, 0.9);
+            transition: all 0.3s ease;
+        }
+
+            .rank-item:hover, .mistake-item:hover {
+                background: rgba(232, 244, 248, 0.9);
+                transform: translateX(5px);
+            }
+
+            .rank-item.current {
+                background: linear-gradient(135deg, rgba(232, 244, 248, 0.9), rgba(255, 255, 255, 0.9));
+                border: 2px solid #4299e1;
+                box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+            }
+
+            .mistake-item.current {
+                background: linear-gradient(135deg, rgba(254, 247, 251, 0.9), rgba(255, 255, 255, 0.9));
+                border: 2px solid #e53e3e;
+                box-shadow: 0 4px 12px rgba(229, 62, 62, 0.15);
+            }
+
+        .rank-number, .mistake-number {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #2c5282, #3b5a8c);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .mistake-number {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+        }
+
+        .rank-item:nth-child(1) .rank-number {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+        }
+
+        .rank-item:nth-child(2) .rank-number {
+            background: linear-gradient(135deg, #c0c0c0, #a0a0a0);
+        }
+
+        .rank-item:nth-child(3) .rank-number {
+            background: linear-gradient(135deg, #cd7f32, #a0522d);
+        }
+
+        .rank-info, .mistake-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .rank-name, .mistake-question {
+            font-weight: 600;
+            color: #2c5282;
+            margin-bottom: 4px;
+            font-size: 16px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .mistake-question {
+            color: #2c5282;
+            font-size: 14px;
+            line-height: 1.4;
+            white-space: normal;
+            margin-bottom: 8px;
+        }
+
+        .rank-score, .mistake-score {
+            font-size: 14px;
+            color: #718096;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mistake-score {
+            justify-content: flex-start;
+            gap: 15px;
+        }
+
+        .rank-time {
+            font-family: monospace;
+            background: rgba(226, 232, 240, 0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .mistake-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .mistake-wrong {
+            background: rgba(254, 215, 215, 0.9);
+            color: #c53030;
+        }
+
+        .mistake-correct {
+            background: rgba(198, 246, 213, 0.9);
+            color: #22543d;
+        }
+
+        .mistake-details {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #718096;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .rank-empty, .mistakes-empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: #a0aec0;
+        }
+
+        .rank-empty-icon, .mistakes-empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .mistakes-empty {
+            padding: 20px;
+        }
+
+        .mistakes-empty-icon {
+            font-size: 36px;
+        }
+
+        .review-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+            .review-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(229, 62, 62, 0.25);
+            }
+
+            .review-btn:disabled {
+                background: #a0aec0;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+        /* 导航按钮区域 */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2c5282, #3b5a8c);
+            color: white;
+        }
+
+            .btn-primary:hover:not(:disabled) {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(44, 82, 130, 0.25);
+            }
+
+            .btn-primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+        .btn-secondary {
+            background: rgba(247, 250, 252, 0.9);
+            color: #4a5568;
+            border: 2px solid rgba(226, 232, 240, 0.8);
+        }
+
+            .btn-secondary:hover {
+                background: rgba(237, 242, 247, 0.9);
+                border-color: #cbd5e0;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            }
+
+        .btn-review {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            color: white;
+        }
+
+            .btn-review:hover:not(:disabled) {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 15px rgba(229, 62, 62, 0.25);
+            }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .page-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            color: #4a5568;
+        }
+
+        .page-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .page-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .page-dot.active {
+                background: #4299e1;
+                transform: scale(1.2);
+            }
+
+            .page-dot.mistake {
+                background: #e53e3e;
+            }
+
+            .page-dot.active.mistake {
+                background: #e53e3e;
+                transform: scale(1.2);
+            }
+
+        /* 结果展示样式 */
+        .result-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 50px 40px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            text-align: center;
+            display: none;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+            .result-container.show {
+                display: block;
+                animation: fadeIn 0.5s ease;
+            }
+
+            .result-container::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 8px;
+                background: linear-gradient(90deg, #2c5282, #4299e1, #38a169, #ffd166);
+            }
+
+        .result-header {
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .result-score {
+            font-size: 80px;
+            font-weight: 700;
+            color: #2c5282;
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+
+            .result-score::after {
+                content: "分";
+                font-size: 36px;
+                position: absolute;
+                right: -30px;
+                top: 20px;
+                opacity: 0.8;
+            }
+
+        .result-text {
+            font-size: 26px;
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .result-level {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .level-expert {
+            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+            color: #22543d;
+        }
+
+        .level-good {
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            color: #2a4365;
+        }
+
+        .level-basic {
+            background: linear-gradient(135deg, #fef3c7, #fbd38d);
+            color: #78350f;
+        }
+
+        .level-poor {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #742a2a;
+        }
+
+        .result-desc {
+            color: #718096;
+            font-size: 16px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+
+        .result-details {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            padding: 25px;
+            background: rgba(247, 250, 252, 0.9);
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+        }
+
+        .detail-item {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .detail-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c5282;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .detail-label {
+            font-size: 15px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .result-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* 错题回顾模态框 */
+        .mistakes-review-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+            .mistakes-review-modal.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .review-modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .mistakes-review-modal.show .review-modal-content {
+            transform: translateY(0);
+        }
+
+        .review-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .review-modal-title {
+            font-size: 24px;
+            color: #2c5282;
+            font-weight: 700;
+        }
+
+        .review-modal-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .review-stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .review-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            background: rgba(247, 250, 252, 0.9);
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            color: #718096;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+            .review-close:hover {
+                background: rgba(226, 232, 240, 0.9);
+                color: #e53e3e;
+                transform: rotate(90deg);
+            }
+
+        .review-questions-container {
+            margin-bottom: 25px;
+        }
+
+        .review-question-card {
+            background: rgba(247, 250, 252, 0.9);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e53e3e;
+            position: relative;
+        }
+
+        .review-question-tag {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+        }
+
+        .review-question-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c5282;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .review-options-list {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .review-option-item {
+            margin-bottom: 10px;
+            padding: 12px 16px;
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 8px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+            .review-option-item.correct {
+                background: rgba(198, 246, 213, 0.9);
+                border-color: #38a169;
+            }
+
+            .review-option-item.incorrect {
+                background: rgba(254, 215, 215, 0.9);
+                border-color: #e53e3e;
+            }
+
+        .review-option-letter {
+            width: 28px;
+            height: 28px;
+            background: #e2e8f0;
+            color: #4a5568;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .review-option-item.correct .review-option-letter {
+            background: #38a169;
+            color: white;
+        }
+
+        .review-option-item.incorrect .review-option-letter {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .review-explanation {
+            padding: 15px;
+            background: rgba(232, 244, 248, 0.9);
+            border-radius: 8px;
+            border-left: 4px solid #2c5282;
+        }
+
+        .review-explanation-title {
+            font-weight: 600;
+            color: #2c5282;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .review-explanation-content {
+            color: #4a5568;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .review-modal-footer {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+            .modal.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            background: rgba(247, 250, 252, 0.9);
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            color: #718096;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+            .modal-close:hover {
+                background: rgba(226, 232, 240, 0.9);
+                color: #e53e3e;
+                transform: rotate(90deg);
+            }
+
+        .modal-title {
+            font-size: 24px;
+            color: #2c5282;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+            .form-input:focus {
+                outline: none;
+                border-color: #4299e1;
+                box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+            }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .top-nav {
+                padding: 0 15px;
+                height: 68px;
+            }
+
+            .nav-title {
+                font-size: 22px;
+            }
+
+            .nav-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+
+            .main-container {
+                margin: 20px auto;
+                padding: 0 15px;
+            }
+
+            .quiz-header {
+                padding: 20px 15px;
+            }
+
+                .quiz-header h1 {
+                    font-size: 26px;
+                }
+
+            .quiz-status {
+                padding: 0;
+            }
+
+            .status-item {
+                flex: 1 1 calc(50% - 10px);
+                justify-content: center;
+                padding: 8px 10px;
+                font-size: 14px;
+            }
+
+            .quiz-container {
+                padding: 20px 15px;
+            }
+
+            .question-title {
+                font-size: 20px;
+            }
+
+            .option-item {
+                font-size: 16px;
+                padding: 14px 16px;
+            }
+
+            .rank-section {
+                width: 100%;
+            }
+
+            .rank-container, .mistakes-container {
+                padding: 20px;
+            }
+
+            .result-container {
+                padding: 30px 20px;
+            }
+
+            .result-score {
+                font-size: 60px;
+            }
+
+                .result-score::after {
+                    font-size: 28px;
+                    right: -25px;
+                    top: 15px;
+                }
+
+            .result-text {
+                font-size: 22px;
+            }
+
+            .result-level {
+                font-size: 18px;
+                padding: 10px 25px;
+            }
+
+            .result-details {
+                gap: 25px;
+                padding: 20px;
+            }
+
+            .detail-item {
+                min-width: 100px;
+            }
+
+            .detail-value {
+                font-size: 28px;
+            }
+
+            .modal-content {
+                padding: 25px 20px;
+                max-height: 85vh;
+            }
+
+            .modal-title {
+                font-size: 22px;
+            }
+
+            .nav-buttons {
+                padding: 15px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .review-modal-content {
+                padding: 20px 15px;
+            }
+
+            .review-modal-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .review-modal-stats {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .embroidery-pattern {
+                display: none;
+            }
+
+            .embroidery-border {
+                display: none;
+            }
+
+            .status-item {
+                flex: 1 1 100%;
+            }
+
+            .question-title {
+                font-size: 18px;
+            }
+
+            .result-details {
+                gap: 15px;
+            }
+
+            .detail-item {
+                min-width: 80px;
+            }
+
+            .detail-value {
+                font-size: 24px;
+            }
+
+            .result-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .mistake-question {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 苗绣背景元素 -->
+    <div class="embroidery-background">
+        <div class="embroidery-pattern pattern-1"></div>
+        <div class="embroidery-pattern pattern-2"></div>
+        <div class="embroidery-pattern pattern-3"></div>
+        <div class="embroidery-pattern pattern-4"></div>
+        <div class="embroidery-border border-top"></div>
+        <div class="embroidery-border border-bottom"></div>
+        <div class="embroidery-border border-left"></div>
+        <div class="embroidery-border border-right"></div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div class="loader-container" id="loaderContainer">
+        <div class="loader"></div>
+    </div>
+
+    <!-- 顶部导航栏 -->
+    <div class="top-nav">
+        <div class="nav-title">苗绣文化GIS系统</div>
+        <div class="nav-right">
+            <button class="nav-btn" id="backBtn">
+                <span>🏠</span>返回首页
+            </button>
+        </div>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container" id="mainContainer">
+        <!-- 答题头部 -->
+        <div class="quiz-header">
+            <h1>苗绣文化知识答题挑战</h1>
+            <p>测试你对苗绣文化的了解程度，共5道题，满分100分，每道题可获取一次提示</p>
+
+            <!-- 答题状态 -->
+            <div class="quiz-status">
+                <div class="status-item">
+                    <span>答题时间：</span>
+                    <span class="timer" id="timer">00:00</span>
+                </div>
+                <div class="status-item">
+                    <span>当前进度：</span>
+                    <span id="progress">1/5</span>
+                </div>
+                <div class="status-item">
+                    <span>当前得分：</span>
+                    <span class="score" id="currentScore">0</span>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="content-wrapper">
+            <!-- 左侧答题区域 -->
+            <div class="quiz-section">
+                <!-- 答题区域 -->
+                <div class="quiz-container" id="quizContainer">
+                    <!-- 题目会通过JS动态生成 -->
+                </div>
+
+                <!-- 导航按钮 -->
+                <div class="nav-buttons">
+                    <div class="page-nav">
+                        <button class="btn btn-secondary" id="prevBtn">
+                            <span>←</span>上一题
+                        </button>
+                        <button class="btn btn-primary" id="nextBtn">
+                            下一题<span>→</span>
+                        </button>
+                    </div>
+
+                    <div class="page-indicator">
+                        <span id="currentPage">1</span>/<span id="totalPages">5</span>
+                        <div class="page-dots" id="pageDots">
+                            <!-- 页码点会动态生成 -->
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" id="resetBtn">
+                            <span>🔄</span>重新开始
+                        </button>
+                        <button class="btn btn-primary" id="submitBtn">
+                            <span>✓</span>提交答案
+                        </button>
+                        <button class="btn btn-review" id="reviewBtn" style="display: none;">
+                            <span>📝</span>查看错题
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧排行榜和错题回顾区域 -->
+            <div class="rank-section">
+                <div class="rank-container">
+                    <h3 class="rank-title">🏆 排行榜</h3>
+                    <ul class="rank-list" id="rankList">
+                        <!-- 排行榜会动态生成 -->
+                    </ul>
+                    <div class="rank-empty" id="rankEmpty" style="display: none;">
+                        <div class="rank-empty-icon">📊</div>
+                        <p>暂无排行榜数据</p>
+                        <p style="font-size: 14px; margin-top: 10px;">完成答题后可以上榜哦！</p>
+                    </div>
+                </div>
+
+                <!-- 错题回顾区域 -->
+                <div class="mistakes-container" id="mistakesContainer" style="display: none;">
+                    <h3 class="mistakes-title">📝 错题回顾</h3>
+                    <ul class="mistakes-list" id="mistakesList">
+                        <!-- 错题列表会动态生成 -->
+                    </ul>
+                    <div class="mistakes-empty" id="mistakesEmpty">
+                        <div class="mistakes-empty-icon">✓</div>
+                        <p>暂无错题记录</p>
+                        <p style="font-size: 14px; margin-top: 10px;">答错题目会显示在这里</p>
+                    </div>
+                    <button class="review-btn" id="reviewMistakesBtn">
+                        <span>🔍</span> 查看详细解析
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果展示区域 -->
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">
+                <div class="result-score" id="finalScore">0</div>
+                <div class="result-text">你的苗绣文化知识水平</div>
+                <div class="result-level" id="resultLevel"></div>
+                <div class="result-desc" id="resultDesc"></div>
+            </div>
+
+            <div class="result-details">
+                <div class="detail-item">
+                    <div class="detail-value" id="correctCount">0</div>
+                    <div class="detail-label">答对题数</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-value" id="wrongCount">0</div>
+                    <div class="detail-label">答错题数</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-value" id="useTime">00:00</div>
+                    <div class="detail-label">用时</div>
+                </div>
+            </div>
+
+            <div class="result-buttons">
+                <button class="btn btn-primary" id="redoBtn">
+                    <span>🔄</span>再来一次
+                </button>
+                <button class="btn btn-review" id="reviewAfterResultBtn">
+                    <span>📝</span>查看错题
+                </button>
+                <button class="btn btn-secondary" id="backHomeBtn">
+                    <span>🏠</span>返回首页
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 姓名输入模态框 -->
+    <div class="modal" id="nameModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalCloseBtn">×</button>
+            <h3 class="modal-title">🎉 恭喜完成答题！</h3>
+            <p style="color: #718096; margin-bottom: 20px; text-align: center;">
+                请输入你的名字加入排行榜
+            </p>
+            <div class="form-group">
+                <label class="form-label">姓名</label>
+                <input type="text" class="form-input" id="userName"
+                       placeholder="请输入你的名字" maxlength="20">
+            </div>
+            <button class="btn btn-primary" id="saveNameBtn" style="width: 100%;">
+                保存并查看结果
+            </button>
+        </div>
+    </div>
+
+    <!-- 错题回顾模态框 -->
+    <div class="mistakes-review-modal" id="mistakesReviewModal">
+        <div class="review-modal-content">
+            <button class="review-close" id="reviewCloseBtn">×</button>
+            <div class="review-modal-header">
+                <h3 class="review-modal-title">📝 错题详细解析</h3>
+                <div class="review-modal-stats">
+                    <div class="review-stat-item">
+                        <span>错题总数：</span>
+                        <strong id="mistakesTotal">0</strong>
+                    </div>
+                    <div class="review-stat-item">
+                        <span>涉及知识点：</span>
+                        <strong id="mistakesCategories">0</strong>
+                    </div>
+                    <div class="review-stat-item">
+                        <span>建议复习时间：</span>
+                        <strong id="reviewTime">5分钟</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="review-questions-container" id="reviewQuestionsContainer">
+                <!-- 错题详细解析会动态生成 -->
+            </div>
+            <div class="review-modal-footer">
+                <button class="btn btn-primary" id="closeReviewBtn">
+                    关闭
+                </button>
+                <button class="btn btn-secondary" id="redoMistakesBtn">
+                    重做错题
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 苗绣题库（20道题目）
+        const questionBank = [
+            {
+                id: 1,
+                type: "single",
+                category: "culture",
+                categoryName: "文化起源",
+                title: "苗绣最早起源于哪个时期？",
+                options: [
+                    { letter: "A", text: "唐朝", isCorrect: false },
+                    { letter: "B", text: "原始社会", isCorrect: true },
+                    { letter: "C", text: "宋朝", isCorrect: false },
+                    { letter: "D", text: "明清时期", isCorrect: false }
+                ],
+                explanation: "苗绣最早起源于原始社会，苗族先祖濮人流行雕题文身习俗，通过针刺皮肤并涂抹植物汁液形成永久花纹，这种身体装饰艺术孕育了苗绣的原始审美，为后来织物刺绣奠定了文化基础与技艺雏形。",
+                hint: "苗绣的起源与苗族先祖的身体装饰习俗有关，远早于唐宋时期"
+            },
+            {
+                id: 2,
+                type: "single",
+                category: "skill",
+                categoryName: "刺绣技艺",
+                title: "以下哪种不是苗绣的主要针法？",
+                options: [
+                    { letter: "A", text: "平绣", isCorrect: false },
+                    { letter: "B", text: "辫绣", isCorrect: false },
+                    { letter: "C", text: "打籽绣", isCorrect: false },
+                    { letter: "D", text: "苏绣", isCorrect: true }
+                ],
+                explanation: "苗绣的主要针法包括平绣、辫绣、打籽绣、绉绣、缠绣等，苏绣是汉族传统刺绣工艺之一，不属于苗绣针法体系。",
+                hint: "注意区分不同民族的刺绣流派，苏绣是著名的汉族刺绣品种"
+            },
+            {
+                id: 3,
+                type: "multiple",
+                category: "culture",
+                categoryName: "分布地区",
+                title: "苗绣的主要分布地区包括哪些？",
+                options: [
+                    { letter: "A", text: "贵州", isCorrect: true },
+                    { letter: "B", text: "湖南", isCorrect: true },
+                    { letter: "C", text: "云南", isCorrect: true },
+                    { letter: "D", text: "四川", isCorrect: false }
+                ],
+                explanation: "苗绣主要分布在贵州黔西北地区、剑河县、雷山县、台江县、凯里市，湖南湘西、凤凰县，云南文山州等苗族聚居地区。",
+                hint: "苗绣主要分布在西南地区的苗族聚居地，四川不是主要分布区"
+            },
+            {
+                id: 4,
+                type: "single",
+                category: "culture",
+                categoryName: "图案象征",
+                title: "以下哪个不是苗绣图案的文化象征？",
+                options: [
+                    { letter: "A", text: "蝴蝶象征生命繁衍", isCorrect: false },
+                    { letter: "B", text: "龙象征权力地位", isCorrect: true },
+                    { letter: "C", text: "稻穗象征农耕文化", isCorrect: false },
+                    { letter: "D", text: "蛙纹象征丰收", isCorrect: false }
+                ],
+                explanation: "苗绣图案遵循'以形寓意'原则，蝴蝶象征生命繁衍，梯田、稻穗象征山地农耕文化，蛙纹象征丰收，龙纹在苗绣中更多象征民族图腾而非权力地位。",
+                hint: "苗族的龙纹与汉族文化中的龙纹象征意义不同"
+            },
+            {
+                id: 5,
+                type: "single",
+                category: "skill",
+                categoryName: "制作流程",
+                title: "苗绣制作流程的第一步是？",
+                options: [
+                    { letter: "A", text: "图案设计与拓印", isCorrect: false },
+                    { letter: "B", text: "选材备料", isCorrect: true },
+                    { letter: "C", text: "刺绣针法实施", isCorrect: false },
+                    { letter: "D", text: "修饰与成品整理", isCorrect: false }
+                ],
+                explanation: "苗绣制作流程分为五个步骤：选材备料 → 图案设计与拓印 → 刺绣针法实施 → 修饰与成品整理 → 成品验收与保存，选材备料是保证成品质量的基础环节。",
+                hint: "任何手工制作的基础都是先准备好所需的材料"
+            },
+            {
+                id: 6,
+                type: "single",
+                category: "history",
+                categoryName: "历史发展",
+                title: "苗绣在哪个时期达到艺术高峰？",
+                options: [
+                    { letter: "A", text: "秦汉时期", isCorrect: false },
+                    { letter: "B", text: "唐宋时期", isCorrect: false },
+                    { letter: "C", text: "明清时期", isCorrect: true },
+                    { letter: "D", text: "民国时期", isCorrect: false }
+                ],
+                explanation: "苗绣在明清时期达到艺术高峰，这一时期苗族社会相对稳定，刺绣技艺得到系统发展，图案纹样更加丰富多样，形成了独特的艺术风格。",
+                hint: "这个时期苗族社会相对稳定，刺绣技艺得到系统发展"
+            },
+            {
+                id: 7,
+                type: "multiple",
+                category: "skill",
+                categoryName: "刺绣材料",
+                title: "传统苗绣常用的材料包括哪些？",
+                options: [
+                    { letter: "A", text: "棉线", isCorrect: true },
+                    { letter: "B", text: "丝线", isCorrect: true },
+                    { letter: "C", text: "麻布", isCorrect: true },
+                    { letter: "D", text: "化纤布料", isCorrect: false }
+                ],
+                explanation: "传统苗绣主要使用棉线、丝线等天然纤维，布料多为棉布、麻布等天然材质，化纤是现代材料，传统苗绣中不会使用。",
+                hint: "传统苗绣主要使用天然材料"
+            },
+            {
+                id: 8,
+                type: "single",
+                category: "pattern",
+                categoryName: "图案特色",
+                title: "苗绣图案最突出的特点是什么？",
+                options: [
+                    { letter: "A", text: "写实主义风格", isCorrect: false },
+                    { letter: "B", text: "抽象变形和象征性", isCorrect: true },
+                    { letter: "C", text: "立体浮雕效果", isCorrect: false },
+                    { letter: "D", text: "单色简洁设计", isCorrect: false }
+                ],
+                explanation: "苗绣图案以抽象变形和象征性为突出特点，通过夸张、变形的手法表达民族信仰、历史记忆和文化内涵，具有强烈的象征意义。",
+                hint: "苗绣图案注重象征意义而非写实"
+            },
+            {
+                id: 9,
+                type: "single",
+                category: "heritage",
+                categoryName: "文化遗产",
+                title: "苗绣被列入哪一级非物质文化遗产名录？",
+                options: [
+                    { letter: "A", text: "县级", isCorrect: false },
+                    { letter: "B", text: "市级", isCorrect: false },
+                    { letter: "C", text: "省级", isCorrect: false },
+                    { letter: "D", text: "国家级", isCorrect: true }
+                ],
+                explanation: "苗绣于2006年被列入第一批国家级非物质文化遗产名录，成为国家重要的非物质文化遗产保护项目。",
+                hint: "苗绣的保护级别很高"
+            },
+            {
+                id: 10,
+                type: "single",
+                category: "skill",
+                categoryName: "刺绣技法",
+                title: "以下哪种针法能使绣面产生立体浮雕效果？",
+                options: [
+                    { letter: "A", text: "平绣", isCorrect: false },
+                    { letter: "B", text: "绉绣", isCorrect: true },
+                    { letter: "C", text: "辫绣", isCorrect: false },
+                    { letter: "D", text: "缠绣", isCorrect: false }
+                ],
+                explanation: "绉绣是苗绣特有的针法，通过将丝线拧成绉状再进行刺绣，能使绣面产生立体浮雕效果，是苗绣中最具特色的技法之一。",
+                hint: "这种针法能使绣面产生立体感"
+            },
+            {
+                id: 11,
+                type: "multiple",
+                category: "pattern",
+                categoryName: "图案主题",
+                title: "苗绣常见的图案主题有哪些？",
+                options: [
+                    { letter: "A", text: "动植物纹样", isCorrect: true },
+                    { letter: "B", text: "几何图案", isCorrect: true },
+                    { letter: "C", text: "神话传说", isCorrect: true },
+                    { letter: "D", text: "历史人物", isCorrect: false }
+                ],
+                explanation: "苗绣图案主题丰富多样，包括动植物纹样（蝴蝶、鱼、龙等）、几何图案（菱形、方形等）、神话传说（洪水滔天、蝴蝶妈妈等），较少涉及具体历史人物。",
+                hint: "苗绣图案多与自然和神话相关"
+            },
+            {
+                id: 12,
+                type: "single",
+                category: "culture",
+                categoryName: "文化功能",
+                title: "传统苗绣最主要的社会功能是什么？",
+                options: [
+                    { letter: "A", text: "商品交易", isCorrect: false },
+                    { letter: "B", text: "装饰美化", isCorrect: false },
+                    { letter: "C", text: "文化传承与身份标识", isCorrect: true },
+                    { letter: "D", text: "宗教祭祀", isCorrect: false }
+                ],
+                explanation: "传统苗绣最主要的社会功能是文化传承与身份标识，通过刺绣纹样传递民族历史、宗教信仰和族群记忆，同时也是区分不同支系的重要标志。",
+                hint: "苗绣承载着重要的文化意义"
+            },
+            {
+                id: 13,
+                type: "single",
+                category: "material",
+                categoryName: "材料特色",
+                title: "传统苗绣使用的染料主要来源于？",
+                options: [
+                    { letter: "A", text: "化学染料", isCorrect: false },
+                    { letter: "B", text: "植物染料", isCorrect: true },
+                    { letter: "C", text: "矿物染料", isCorrect: false },
+                    { letter: "D", text: "动物染料", isCorrect: false }
+                ],
+                explanation: "传统苗绣使用的染料主要来源于植物染料，如蓝靛、茜草、栀子等，这些天然染料环保且色彩持久，体现了苗族人民的生态智慧。",
+                hint: "苗绣染料多取自大自然"
+            },
+            {
+                id: 14,
+                type: "multiple",
+                category: "skill",
+                categoryName: "刺绣工艺",
+                title: "苗绣的工艺特点包括哪些？",
+                options: [
+                    { letter: "A", text: "反面挑，正面看", isCorrect: true },
+                    { letter: "B", text: "不用画稿，凭记忆绣", isCorrect: true },
+                    { letter: "C", text: "色彩对比强烈", isCorrect: true },
+                    { letter: "D", text: "追求写实效果", isCorrect: false }
+                ],
+                explanation: "苗绣工艺特点包括'反面挑，正面看'的独特绣法、不用画稿凭记忆刺绣的传统、色彩对比强烈的艺术风格，但通常不追求写实效果，而是强调象征意义。",
+                hint: "苗绣有独特的绣法和艺术风格"
+            },
+            {
+                id: 15,
+                type: "single",
+                category: "history",
+                categoryName: "历史意义",
+                title: "苗绣被称为'穿在身上的史书'，主要是因为什么？",
+                options: [
+                    { letter: "A", text: "记录苗族迁徙历史", isCorrect: true },
+                    { letter: "B", text: "记载苗族战争史", isCorrect: false },
+                    { letter: "C", text: "记录苗族政治制度", isCorrect: false },
+                    { letter: "D", text: "记载苗族科技发展", isCorrect: false }
+                ],
+                explanation: "苗绣被称为'穿在身上的史书'，主要是因为其图案纹样记录了苗族先民的迁徙路线和历史记忆，是苗族口传历史的可视化呈现。",
+                hint: "苗绣图案承载着民族的历史记忆"
+            },
+            {
+                id: 16,
+                type: "single",
+                category: "pattern",
+                categoryName: "图案寓意",
+                title: "苗绣中常见的'卍'字纹象征什么？",
+                options: [
+                    { letter: "A", text: "太阳和永恒", isCorrect: true },
+                    { letter: "B", text: "财富和权力", isCorrect: false },
+                    { letter: "C", text: "战争和胜利", isCorrect: false },
+                    { letter: "D", text: "爱情和婚姻", isCorrect: false }
+                ],
+                explanation: "苗绣中的'卍'字纹象征太阳和永恒，是古老的太阳崇拜符号，代表着生命、光明和永恒轮回，与佛教中的卍字意义不同。",
+                hint: "这个纹样与天体崇拜有关"
+            },
+            {
+                id: 17,
+                type: "multiple",
+                category: "heritage",
+                categoryName: "保护传承",
+                title: "当代苗绣保护传承面临的主要挑战有哪些？",
+                options: [
+                    { letter: "A", text: "传承人老龄化", isCorrect: true },
+                    { letter: "B", text: "年轻人兴趣不高", isCorrect: true },
+                    { letter: "C", text: "市场化冲击", isCorrect: true },
+                    { letter: "D", text: "技艺完全失传", isCorrect: false }
+                ],
+                explanation: "当代苗绣保护传承面临传承人老龄化、年轻人兴趣不高、市场化冲击等挑战，但技艺并未完全失传，通过各方努力正在得到有效保护和传承。",
+                hint: "这是许多传统手工艺面临的共同问题"
+            },
+            {
+                id: 18,
+                type: "single",
+                category: "skill",
+                categoryName: "刺绣工具",
+                title: "传统苗绣使用的主要工具是什么？",
+                options: [
+                    { letter: "A", text: "绣花机", isCorrect: false },
+                    { letter: "B", text: "绣花针", isCorrect: true },
+                    { letter: "C", text: "缝纫机", isCorrect: false },
+                    { letter: "D", text: "编织机", isCorrect: false }
+                ],
+                explanation: "传统苗绣使用的主要工具是绣花针，全部为手工刺绣，不使用任何机械设备，体现了手工艺的精湛和独特性。",
+                hint: "传统苗绣完全是手工制作"
+            },
+            {
+                id: 19,
+                type: "single",
+                category: "culture",
+                categoryName: "文化价值",
+                title: "苗绣最重要的文化价值体现在哪个方面？",
+                options: [
+                    { letter: "A", text: "经济价值", isCorrect: false },
+                    { letter: "B", text: "审美价值", isCorrect: false },
+                    { letter: "C", text: "历史文化价值", isCorrect: true },
+                    { letter: "D", text: "实用价值", isCorrect: false }
+                ],
+                explanation: "苗绣最重要的文化价值体现在其历史文化价值，它是苗族文化的活态载体，承载着民族的历史记忆、宗教信仰、审美观念和社会习俗。",
+                hint: "苗绣承载着丰富的文化内涵"
+            },
+            {
+                id: 20,
+                type: "multiple",
+                category: "pattern",
+                categoryName: "色彩运用",
+                title: "苗绣色彩运用的特点有哪些？",
+                options: [
+                    { letter: "A", text: "色彩对比强烈", isCorrect: true },
+                    { letter: "B", text: "色调和谐统一", isCorrect: false },
+                    { letter: "C", text: "喜欢用纯色", isCorrect: true },
+                    { letter: "D", text: "色彩有象征意义", isCorrect: true }
+                ],
+                explanation: "苗绣色彩运用以色彩对比强烈、喜欢用纯色、色彩有象征意义为特点，如红色象征生命和喜庆，黑色象征庄重和神秘，蓝色象征天空和水等。",
+                hint: "苗绣色彩鲜艳且有象征意义"
+            }
+        ];
+
+        // 全局变量
+        let currentPage = 1;
+        let totalPages = 5; // 每次5道题
+        let timerInterval;
+        let startTime;
+        let userAnswers = {};
+        let isSubmitted = false;
+        let usedHints = new Set();
+        let quizResult = null;
+        let currentQuizData = []; // 当前抽到的题目
+        let quizSessionId = null; // 本次答题会话ID
+        let wrongQuestions = []; // 错题集合
+
+        // 页面加载完成后初始化
+        $(document).ready(function () {
+            // 模拟加载过程
+            setTimeout(() => {
+                $('#loaderContainer').addClass('hide');
+                setTimeout(() => {
+                    $('#mainContainer').addClass('show');
+                }, 300);
+            }, 800);
+
+            // 初始化答题页面（随机抽取题目）
+            initQuiz();
+
+            // 绑定事件
+            bindEvents();
+
+            // 启动计时器
+            startTimer();
+
+            // 加载排行榜
+            loadRankings();
+
+            // 加载保存的答案
+            loadSavedAnswers();
+        });
+
+        /**
+         * 随机抽取题目
+         */
+        function getRandomQuestions() {
+            // 创建副本以避免修改原数组
+            const allQuestions = [...questionBank];
+            const selectedQuestions = [];
+
+            // 生成本次答题的唯一ID
+            quizSessionId = 'quiz_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+            // 随机抽取5道题目
+            while (selectedQuestions.length < 5 && allQuestions.length > 0) {
+                const randomIndex = Math.floor(Math.random() * allQuestions.length);
+                selectedQuestions.push(allQuestions.splice(randomIndex, 1)[0]);
+            }
+
+            // 为每道题目分配新的ID（1-5）
+            selectedQuestions.forEach((question, index) => {
+                question.originalId = question.id; // 保存原始ID
+                question.id = index + 1; // 重新编号为1-5
+            });
+
+            return selectedQuestions;
+        }
+
+        /**
+         * 初始化答题页面
+         */
+        function initQuiz() {
+            // 随机抽取题目
+            currentQuizData = getRandomQuestions();
+
+            // 渲染所有题目
+            renderAllQuestions();
+
+            // 更新页面显示
+            updatePageDisplay();
+
+            // 更新页码点
+            updatePageDots();
+
+            // 更新按钮状态
+            updateButtonStates();
+
+            // 更新总页数显示
+            totalPages = currentQuizData.length;
+            $('#totalPages').text(totalPages);
+
+            // 更新进度显示
+            updateProgress();
+
+            // 重置错题集合
+            wrongQuestions = [];
+        }
+
+        /**
+         * 渲染所有题目
+         */
+        function renderAllQuestions() {
+            if (currentQuizData.length === 0) return;
+
+            let html = '';
+
+            currentQuizData.forEach((question, index) => {
+                const typeText = question.type === 'single' ? '单选题' :
+                    question.type === 'multiple' ? '多选题' : '判断题';
+
+                // 检查是否已使用提示
+                const hintUsed = usedHints.has(question.id);
+
+                html += `
+                                <div class="question-card ${index === 0 ? 'active' : ''}"
+                                     data-question-id="${question.id}"
+                                     data-question-type="${question.type}">
+                                    <div class="question-tag tag-${question.category}">
+                                        ${question.categoryName}
+                                    </div>
+                                    <div class="question-title">
+                                        <span>${index + 1}.</span> ${question.title}
+                                        <span class="question-type">(${typeText})</span>
+                                    </div>
+                                    <ul class="options-list">
+                                        ${question.options.map(option => {
+                    // 检查是否已选中
+                    const isSelected = userAnswers[question.id] &&
+                        userAnswers[question.id].includes(option.letter);
+                    return `
+                                            <li class="option-item ${isSelected ? 'selected' : ''}"
+                                                data-is-correct="${option.isCorrect}">
+                                                <span class="option-letter">${option.letter}</span>
+                                                <span class="option-text">${option.text}</span>
+                                                <span class="option-icon">
+                                                    ${option.isCorrect ? '✓' : ''}
+                                                </span>
+                                            </li>
+                                            `;
+                }).join('')}
+                                    </ul>
+                                    <button class="hint-btn" ${hintUsed ? 'disabled' : ''}
+                                            data-question-id="${question.id}">
+                                        <span>💡</span> 获取提示
+                                    </button>
+                                    <div class="hint-content ${hintUsed ? 'show' : ''}">
+                                        ${question.hint}
+                                    </div>
+                                    <div class="explanation">
+                                        <div class="explanation-title">
+                                            答案解析：
+                                        </div>
+                                        <div class="explanation-content">${question.explanation}</div>
+                                    </div>
+                                </div>
+                            `;
+            });
+
+            $('#quizContainer').html(html);
+        }
+
+        /**
+         * 绑定事件
+         */
+        function bindEvents() {
+            // 选项点击事件
+            $(document).on('click', '.option-item', function () {
+                if (isSubmitted) return;
+
+                const $questionCard = $(this).closest('.question-card');
+                const questionId = $questionCard.data('question-id');
+                const questionType = $questionCard.data('question-type');
+                const optionLetter = $(this).find('.option-letter').text();
+
+                // 单选题：取消其他选项选中状态
+                if (questionType === 'single') {
+                    $questionCard.find('.option-item').removeClass('selected');
+                    $(this).addClass('selected');
+                    userAnswers[questionId] = [optionLetter];
+                } else { // 多选题
+                    $(this).toggleClass('selected');
+
+                    if (!userAnswers[questionId]) {
+                        userAnswers[questionId] = [];
+                    }
+
+                    if ($(this).hasClass('selected')) {
+                        userAnswers[questionId].push(optionLetter);
+                    } else {
+                        const index = userAnswers[questionId].indexOf(optionLetter);
+                        if (index > -1) {
+                            userAnswers[questionId].splice(index, 1);
+                        }
+                    }
+                }
+
+                // 自动保存答案
+                saveAnswers();
+
+                // 更新按钮状态
+                updateButtonStates();
+            });
+
+            // 提示按钮点击事件
+            $(document).on('click', '.hint-btn', function () {
+                const questionId = $(this).data('question-id');
+                const $hintContent = $(this).next('.hint-content');
+
+                $hintContent.addClass('show');
+                $(this).prop('disabled', true);
+                usedHints.add(questionId);
+                saveAnswers();
+            });
+
+            // 上一题按钮
+            $('#prevBtn').click(function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePageDisplay();
+                }
+            });
+
+            // 下一题按钮
+            $('#nextBtn').click(function () {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePageDisplay();
+                }
+            });
+
+            // 提交按钮
+            $('#submitBtn').click(function () {
+                if (isSubmitted) return;
+
+                // 检查是否有未答题
+                const unansweredCount = currentQuizData.filter(q =>
+                    !userAnswers[q.id] || userAnswers[q.id].length === 0
+                ).length;
+
+                if (unansweredCount > 0) {
+                    if (confirm(`还有${unansweredCount}道题未答，确定要提交吗？`)) {
+                        submitQuiz();
+                    }
+                    return;
+                }
+
+                submitQuiz();
+            });
+
+            // 重新开始按钮
+            $('#resetBtn').click(function () {
+                if (confirm('确定要重新开始答题吗？当前进度将会丢失。')) {
+                    resetQuiz();
+                }
+            });
+
+            // 返回首页按钮
+            $('#backHomeBtn, #backBtn').click(function () {
+                window.location.href = 'Default.html';
+            });
+
+            // 再来一次按钮
+            $('#redoBtn').click(function () {
+                resetQuiz();
+            });
+
+            // 查看错题按钮（在结果页）
+            $('#reviewAfterResultBtn').click(function () {
+                showMistakesReviewModal();
+            });
+
+            // 查看错题按钮（在答题页）
+            $('#reviewBtn').click(function () {
+                showMistakesReviewModal();
+            });
+
+            // 查看详细解析按钮
+            $('#reviewMistakesBtn').click(function () {
+                showMistakesReviewModal();
+            });
+
+            // 保存姓名按钮
+            $('#saveNameBtn').click(function () {
+                saveUserName();
+            });
+
+            // 模态框关闭按钮
+            $('#modalCloseBtn').click(function () {
+                $('#nameModal').removeClass('show');
+            });
+
+            // 错题回顾模态框关闭按钮
+            $('#reviewCloseBtn, #closeReviewBtn').click(function () {
+                $('#mistakesReviewModal').removeClass('show');
+            });
+
+            // 重做错题按钮
+            $('#redoMistakesBtn').click(function () {
+                redoMistakes();
+            });
+
+            // 页码点点击事件
+            $(document).on('click', '.page-dot', function () {
+                const page = $(this).data('page');
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    updatePageDisplay();
+                }
+            });
+        }
+
+        /**
+         * 启动计时器
+         */
+        function startTimer() {
+            startTime = new Date();
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = Math.floor((now - startTime) / 1000);
+                const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+                const seconds = (diff % 60).toString().padStart(2, '0');
+                $('#timer').text(`${minutes}:${seconds}`);
+            }, 1000);
+        }
+
+        /**
+         * 更新页面显示
+         */
+        function updatePageDisplay() {
+            if (currentQuizData.length === 0) return;
+
+            // 隐藏所有题目卡片
+            $('.question-card').removeClass('active');
+
+            // 显示当前题目卡片
+            $(`.question-card:nth-child(${currentPage})`).addClass('active');
+
+            // 更新页面指示器
+            $('#currentPage').text(currentPage);
+            $('#totalPages').text(totalPages);
+
+            // 更新页码点
+            updatePageDots();
+
+            // 更新按钮状态
+            updateButtonStates();
+
+            // 更新进度显示
+            updateProgress();
+        }
+
+        /**
+         * 更新页码点
+         */
+        function updatePageDots() {
+            let dotsHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const isWrong = wrongQuestions.some(q => q.id === i);
+                const isCurrent = i === currentPage;
+                dotsHtml += `<div class="page-dot ${isCurrent ? 'active' : ''} ${isWrong ? 'mistake' : ''}"
+                                             data-page="${i}"></div>`;
+            }
+            $('#pageDots').html(dotsHtml);
+        }
+
+        /**
+         * 更新按钮状态
+         */
+        function updateButtonStates() {
+            // 上一题按钮
+            $('#prevBtn').prop('disabled', currentPage === 1);
+
+            // 下一题按钮
+            $('#nextBtn').prop('disabled', currentPage === totalPages);
+
+            // 提交按钮
+            const unansweredCount = currentQuizData.filter(q =>
+                !userAnswers[q.id] || userAnswers[q.id].length === 0
+            ).length;
+            $('#submitBtn').prop('disabled', isSubmitted);
+
+            // 当前题目是否有答案
+            if (currentQuizData.length > 0) {
+                const currentQuestionId = currentQuizData[currentPage - 1].id;
+                const hasAnswer = userAnswers[currentQuestionId] &&
+                    userAnswers[currentQuestionId].length > 0;
+
+                // 如果当前题目有答案，高亮显示
+                if (hasAnswer) {
+                    $(`.page-dot[data-page="${currentPage}"]`).css('background', '#38a169');
+                }
+            }
+
+            // 显示/隐藏错题回顾按钮
+            if (isSubmitted && wrongQuestions.length > 0) {
+                $('#reviewBtn').show();
+            } else {
+                $('#reviewBtn').hide();
+            }
+        }
+
+        /**
+         * 更新答题进度
+         */
+        function updateProgress() {
+            if (currentQuizData.length === 0) return;
+
+            // 计算已答题数
+            const answeredCount = Object.keys(userAnswers).filter(id => {
+                return userAnswers[id] && userAnswers[id].length > 0;
+            }).length;
+
+            // 更新进度显示
+            $('#progress').text(`${currentPage}/${totalPages}`);
+
+            // 更新进度条
+            const progressPercent = (currentPage / totalPages) * 100;
+            $('#progressFill').css('width', `${progressPercent}%`);
+
+            // 预览得分（已答对的题目）
+            let previewScore = 0;
+            currentQuizData.forEach(question => {
+                const userAnswer = userAnswers[question.id];
+                if (userAnswer && userAnswer.length > 0) {
+                    const correctAnswers = question.options
+                        .filter(option => option.isCorrect)
+                        .map(option => option.letter);
+
+                    if (JSON.stringify(userAnswer.sort()) === JSON.stringify(correctAnswers.sort())) {
+                        previewScore += 20;
+                    }
+                }
+            });
+
+            $('#currentScore').text(previewScore);
+        }
+
+        /**
+         * 提交答题
+         */
+        function submitQuiz() {
+            // 停止计时器
+            clearInterval(timerInterval);
+
+            // 标记为已提交
+            isSubmitted = true;
+
+            // 计算得分
+            calculateScore();
+
+            // 显示答案和解析
+            showAnswersAndExplanations();
+
+            // 更新错题列表
+            updateMistakesList();
+
+            // 隐藏答题区域，显示结果区域
+            $('.content-wrapper').hide();
+            $('.nav-buttons').hide();
+            $('.quiz-header').hide();
+
+            // 显示姓名输入模态框
+            setTimeout(() => {
+                $('#nameModal').addClass('show');
+            }, 500);
+
+            // 清除保存的答案
+            clearSavedAnswers();
+        }
+
+        /**
+         * 计算最终得分
+         */
+        function calculateScore() {
+            let score = 0;
+            let correctCount = 0;
+            let wrongCount = 0;
+
+            currentQuizData.forEach(question => {
+                const userAnswer = userAnswers[question.id] || [];
+                const correctAnswers = question.options
+                    .filter(option => option.isCorrect)
+                    .map(option => option.letter);
+
+                // 判断是否答对
+                const isCorrect = JSON.stringify(userAnswer.sort()) ===
+                    JSON.stringify(correctAnswers.sort());
+
+                if (isCorrect) {
+                    score += 20; // 每道题20分，总计100分
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                    // 添加到错题集合
+                    wrongQuestions.push({
+                        ...question,
+                        userAnswer: userAnswer,
+                        correctAnswers: correctAnswers
+                    });
+                }
+
+                // 保存答题结果
+                question.userIsCorrect = isCorrect;
+                question.userAnswer = userAnswer;
+                question.correctAnswers = correctAnswers;
+            });
+
+            // 计算用时
+            const endTime = new Date();
+            const diff = Math.floor((endTime - startTime) / 1000);
+            const minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+            const seconds = (diff % 60).toString().padStart(2, '0');
+            const useTime = `${minutes}:${seconds}`;
+
+            // 保存结果
+            quizResult = {
+                score: score,
+                correctCount: correctCount,
+                wrongCount: wrongCount,
+                useTime: useTime,
+                timestamp: new Date().getTime(),
+                sessionId: quizSessionId,
+                totalQuestions: currentQuizData.length,
+                wrongQuestions: wrongQuestions
+            };
+
+            // 显示结果
+            showResult();
+        }
+
+        /**
+         * 显示正确答案和解析
+         */
+        function showAnswersAndExplanations() {
+            currentQuizData.forEach(question => {
+                const $questionCard = $(`.question-card[data-question-id="${question.id}"]`);
+
+                // 标记正确和错误选项
+                $questionCard.find('.option-item').each(function () {
+                    const $this = $(this);
+                    const letter = $this.find('.option-letter').text();
+                    const isCorrect = $this.data('is-correct');
+
+                    // 标记正确答案
+                    if (isCorrect) {
+                        $this.addClass('correct');
+                    }
+
+                    // 标记用户选错的答案
+                    if (!isCorrect && $this.hasClass('selected')) {
+                        $this.addClass('incorrect');
+                    }
+                });
+
+                // 显示解析
+                $questionCard.find('.explanation').addClass('show');
+            });
+        }
+
+        /**
+         * 更新错题列表
+         */
+        function updateMistakesList() {
+            if (wrongQuestions.length === 0) {
+                $('#mistakesContainer').hide();
+                return;
+            }
+
+            $('#mistakesContainer').show();
+            $('#mistakesEmpty').hide();
+            $('#mistakesList').show();
+
+            let mistakesHtml = '';
+            wrongQuestions.forEach((question, index) => {
+                const questionText = question.title.length > 50 ?
+                    question.title.substring(0, 50) + '...' :
+                    question.title;
+
+                // 获取用户答案和正确答案
+                const userAnswer = question.userAnswer ? question.userAnswer.join(', ') : '未作答';
+                const correctAnswer = question.correctAnswers ? question.correctAnswers.join(', ') : '';
+
+                mistakesHtml += `
+                        <li class="mistake-item ${question.id === currentPage ? 'current' : ''}">
+                            <div class="mistake-number">${index + 1}</div>
+                            <div class="mistake-info">
+                                <div class="mistake-question">${questionText}</div>
+                                <div class="mistake-details">
+                                    <span>你的答案：${userAnswer}</span>
+                                    <span>正确答案：${correctAnswer}</span>
+                                </div>
+                                <div class="mistake-score">
+                                    <span class="mistake-status mistake-wrong">答错</span>
+                                    <span>知识点：${question.categoryName}</span>
+                                </div>
+                            </div>
+                        </li>
+                    `;
+            });
+
+            $('#mistakesList').html(mistakesHtml);
+        }
+
+        /**
+         * 显示答题结果
+         */
+        function showResult() {
+            const result = quizResult;
+
+            // 更新结果数据
+            $('#finalScore').text(result.score);
+            $('#correctCount').text(result.correctCount);
+            $('#wrongCount').text(result.wrongCount);
+            $('#useTime').text(result.useTime);
+
+            // 设置等级和描述
+            setResultLevel(result.score);
+
+            // 分数动画
+            animateScore();
+
+            // 显示结果容器
+            $('#resultContainer').addClass('show');
+
+            // 更新错题列表
+            updateMistakesList();
+        }
+
+        /**
+         * 分数动画
+         */
+        function animateScore() {
+            const finalScore = quizResult.score;
+            let currentScore = 0;
+            const duration = 1500;
+            const stepTime = 30;
+            const totalSteps = duration / stepTime;
+            const stepScore = finalScore / totalSteps;
+
+            const scoreInterval = setInterval(() => {
+                currentScore += stepScore;
+                if (currentScore >= finalScore) {
+                    currentScore = finalScore;
+                    clearInterval(scoreInterval);
+                }
+                $('#finalScore').text(Math.round(currentScore));
+            }, stepTime);
+        }
+
+        /**
+         * 设置结果等级和描述
+         */
+        function setResultLevel(score) {
+            const $level = $('#resultLevel');
+            const $desc = $('#resultDesc');
+
+            if (score >= 90) {
+                $level.text('苗绣文化大师').addClass('level-expert');
+                $desc.text('恭喜你！你对苗绣文化有着深入的了解，堪称苗绣文化大师。你的知识涵盖了苗绣的起源、技艺、文化内涵等各个方面，继续保持这份热爱与研究！');
+            } else if (score >= 70) {
+                $level.text('苗绣文化达人').addClass('level-good');
+                $desc.text('很棒！你是一位苗绣文化达人，对苗绣的主要知识点有很好的掌握。继续深入学习，你将成为真正的苗绣文化专家。');
+            } else if (score >= 60) {
+                $level.text('苗绣文化爱好者').addClass('level-basic');
+                $desc.text('不错！你是一名苗绣文化爱好者，已经掌握了苗绣的基础知识。建议多了解苗绣的历史背景和文化内涵，进一步提升自己的知识水平。');
+            } else {
+                $level.text('苗绣文化初学者').addClass('level-poor');
+                $desc.text('没关系！你目前是苗绣文化初学者。苗绣是一门博大精深的传统艺术，建议从苗绣的历史、针法、图案寓意等基础开始学习，逐步提升自己的知识储备。');
+            }
+        }
+
+        /**
+         * 显示错题回顾模态框
+         */
+        function showMistakesReviewModal() {
+            if (wrongQuestions.length === 0) {
+                alert('暂无错题可回顾！');
+                return;
+            }
+
+            // 更新统计信息
+            const categories = new Set(wrongQuestions.map(q => q.categoryName));
+            $('#mistakesTotal').text(wrongQuestions.length);
+            $('#mistakesCategories').text(categories.size);
+
+            // 计算建议复习时间
+            const reviewMinutes = Math.max(5, Math.ceil(wrongQuestions.length * 2));
+            $('#reviewTime').text(`${reviewMinutes}分钟`);
+
+            // 生成详细解析内容
+            let reviewHtml = '';
+            wrongQuestions.forEach((question, index) => {
+                const typeText = question.type === 'single' ? '单选题' :
+                    question.type === 'multiple' ? '多选题' : '判断题';
+
+                reviewHtml += `
+                        <div class="review-question-card">
+                            <div class="review-question-tag">
+                                ${question.categoryName} · ${typeText}
+                            </div>
+                            <div class="review-question-title">
+                                <strong>${index + 1}.</strong> ${question.title}
+                            </div>
+                            <ul class="review-options-list">
+                                ${question.options.map(option => {
+                    const isCorrect = option.isCorrect;
+                    const isUserSelected = question.userAnswer &&
+                        question.userAnswer.includes(option.letter);
+                    let className = '';
+                    if (isCorrect) {
+                        className = 'correct';
+                    } else if (isUserSelected) {
+                        className = 'incorrect';
+                    }
+                    return `
+                                        <li class="review-option-item ${className}">
+                                            <span class="review-option-letter">${option.letter}</span>
+                                            <span class="review-option-text">${option.text}</span>
+                                        </li>
+                                    `;
+                }).join('')}
+                            </ul>
+                            <div class="review-explanation">
+                                <div class="review-explanation-title">📖 答案解析</div>
+                                <div class="review-explanation-content">${question.explanation}</div>
+                            </div>
+                        </div>
+                    `;
+            });
+
+            $('#reviewQuestionsContainer').html(reviewHtml);
+
+            // 显示模态框
+            $('#mistakesReviewModal').addClass('show');
+        }
+
+        /**
+         * 重做错题
+         */
+        function redoMistakes() {
+            if (wrongQuestions.length === 0) return;
+
+            if (confirm('确定要重做错题吗？系统将抽取新的题目来覆盖错题相关知识点。')) {
+                // 收集错题涉及的知识点
+                const wrongCategories = [...new Set(wrongQuestions.map(q => q.category))];
+
+                // 从题库中筛选相关题目
+                let relatedQuestions = questionBank.filter(q =>
+                    wrongCategories.includes(q.category)
+                );
+
+                // 如果相关题目不足5道，补充其他题目
+                if (relatedQuestions.length < 5) {
+                    const otherQuestions = questionBank.filter(q =>
+                        !wrongCategories.includes(q.category)
+                    );
+                    relatedQuestions = relatedQuestions.concat(
+                        otherQuestions.slice(0, 5 - relatedQuestions.length)
+                    );
+                }
+
+                // 随机选择5道题
+                const newQuizData = [];
+                while (newQuizData.length < 5 && relatedQuestions.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * relatedQuestions.length);
+                    newQuizData.push(relatedQuestions.splice(randomIndex, 1)[0]);
+                }
+
+                // 重新编号
+                newQuizData.forEach((question, index) => {
+                    question.originalId = question.id;
+                    question.id = index + 1;
+                });
+
+                // 重置状态
+                resetQuiz();
+
+                // 使用新的题目数据
+                currentQuizData = newQuizData;
+
+                // 重新渲染
+                renderAllQuestions();
+                updatePageDisplay();
+                updatePageDots();
+                updateButtonStates();
+                updateProgress();
+
+                // 关闭模态框
+                $('#mistakesReviewModal').removeClass('show');
+
+                // 显示提示
+                alert('已为您生成包含错题相关知识点的5道新题目，请重新答题！');
+            }
+        }
+
+        /**
+         * 保存用户名并更新排行榜
+         */
+        function saveUserName() {
+            const userName = $('#userName').val().trim();
+
+            if (!userName) {
+                alert('请输入你的名字');
+                return;
+            }
+
+            // 保存结果到本地存储
+            saveResultToLocalStorage(userName);
+
+            // 保存错题记录
+            saveMistakesToLocalStorage(userName);
+
+            // 关闭模态框
+            $('#nameModal').removeClass('show');
+
+            // 重新加载排行榜
+            loadRankings();
+        }
+
+        /**
+         * 保存结果到本地存储
+         */
+        function saveResultToLocalStorage(userName) {
+            try {
+                // 获取现有排行榜
+                let rankings = JSON.parse(localStorage.getItem('miaoXiuRankings') || '[]');
+
+                // 添加新结果
+                const newRanking = {
+                    name: userName,
+                    score: quizResult.score,
+                    time: quizResult.useTime,
+                    date: new Date().toLocaleDateString(),
+                    timestamp: new Date().getTime(),
+                    sessionId: quizResult.sessionId,
+                    totalQuestions: quizResult.totalQuestions
+                };
+
+                rankings.push(newRanking);
+
+                // 按分数排序（相同分数按时间排序）
+                rankings.sort((a, b) => {
+                    if (b.score === a.score) {
+                        // 解析时间为秒数
+                        const aTime = a.time.split(':');
+                        const bTime = b.time.split(':');
+                        const aSeconds = parseInt(aTime[0]) * 60 + parseInt(aTime[1]);
+                        const bSeconds = parseInt(bTime[0]) * 60 + parseInt(bTime[1]);
+                        return aSeconds - bSeconds;
+                    }
+                    return b.score - a.score;
+                });
+
+                // 只保留前6名
+                rankings = rankings.slice(0, 6);
+
+                // 保存到本地存储
+                localStorage.setItem('miaoXiuRankings', JSON.stringify(rankings));
+
+            } catch (e) {
+                console.error('保存排行榜数据失败：', e);
+            }
+        }
+
+        /**
+         * 保存错题记录到本地存储
+         */
+        function saveMistakesToLocalStorage(userName) {
+            try {
+                // 获取现有错题记录
+                let mistakesHistory = JSON.parse(localStorage.getItem('miaoXiuMistakesHistory') || '[]');
+
+                // 添加新的错题记录
+                const newMistakesRecord = {
+                    name: userName,
+                    date: new Date().toLocaleDateString(),
+                    timestamp: new Date().getTime(),
+                    totalQuestions: quizResult.totalQuestions,
+                    wrongCount: quizResult.wrongCount,
+                    wrongQuestions: wrongQuestions.map(q => ({
+                        originalId: q.originalId,
+                        category: q.category,
+                        categoryName: q.categoryName,
+                        title: q.title
+                    })),
+                    sessionId: quizResult.sessionId
+                };
+
+                mistakesHistory.push(newMistakesRecord);
+
+                // 只保留最近10次记录
+                mistakesHistory = mistakesHistory.slice(-10);
+
+                // 保存到本地存储
+                localStorage.setItem('miaoXiuMistakesHistory', JSON.stringify(mistakesHistory));
+
+            } catch (e) {
+                console.error('保存错题记录失败：', e);
+            }
+        }
+
+        /**
+         * 加载排行榜数据
+         */
+        function loadRankings() {
+            let rankings = JSON.parse(localStorage.getItem('miaoXiuRankings') || '[]');
+
+            // 确保只显示前6名
+            rankings = rankings.slice(0, 6);
+
+            if (rankings.length === 0) {
+                $('#rankList').hide();
+                $('#rankEmpty').show();
+                return;
+            }
+
+            $('#rankEmpty').hide();
+            $('#rankList').show();
+
+            let rankHtml = '';
+            rankings.forEach((item, index) => {
+                rankHtml += `
+                    <li class="rank-item ${item.sessionId === quizResult?.sessionId ? 'current' : ''}">
+                        <div class="rank-number">${index + 1}</div>
+                        <div class="rank-info">
+                            <div class="rank-name">${item.name}</div>
+                            <div class="rank-score">
+                                <span>得分：${item.score}分</span>
+                                <span class="rank-time">${item.time}</span>
+                            </div>
+                        </div>
+                    </li>
+                `;
+            });
+
+            $('#rankList').html(rankHtml);
+        }
+
+        /**
+         * 重置答题
+         */
+        function resetQuiz() {
+            // 重置状态
+            currentPage = 1;
+            isSubmitted = false;
+            userAnswers = {};
+            usedHints.clear();
+            quizResult = null;
+            quizSessionId = null;
+            wrongQuestions = [];
+
+            // 重置UI
+            $('.content-wrapper').show();
+            $('.nav-buttons').show();
+            $('.quiz-header').show();
+            $('#resultContainer').removeClass('show');
+            $('#mistakesContainer').hide();
+
+            // 重置计时器
+            clearInterval(timerInterval);
+            $('#timer').text('00:00');
+
+            // 重新初始化（重新随机抽题）
+            initQuiz();
+
+            // 重启计时器
+            startTimer();
+
+            // 清除保存的答案
+            clearSavedAnswers();
+        }
+
+        /**
+         * 保存答案到本地存储
+         */
+        function saveAnswers() {
+            try {
+                const saveData = {
+                    currentPage: currentPage,
+                    userAnswers: userAnswers,
+                    usedHints: Array.from(usedHints),
+                    startTime: startTime.getTime(),
+                    timestamp: new Date().getTime(),
+                    quizData: currentQuizData, // 保存当前题目数据
+                    sessionId: quizSessionId
+                };
+                localStorage.setItem('miaoXiuQuizProgress', JSON.stringify(saveData));
+            } catch (e) {
+                console.error('保存答题进度失败：', e);
+            }
+        }
+
+        /**
+         * 从本地存储加载答案
+         */
+        function loadSavedAnswers() {
+            try {
+                const savedData = localStorage.getItem('miaoXiuQuizProgress');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    // 检查数据是否在1小时内
+                    const now = new Date().getTime();
+                    if (now - data.timestamp < 60 * 60 * 1000) {
+                        currentPage = data.currentPage || 1;
+                        userAnswers = data.userAnswers || {};
+                        usedHints = new Set(data.usedHints || []);
+                        currentQuizData = data.quizData || [];
+                        quizSessionId = data.sessionId;
+
+                        // 恢复计时器
+                        if (data.startTime) {
+                            const elapsed = now - data.startTime;
+                            startTime = new Date(now - elapsed);
+                        }
+
+                        // 重新渲染并更新显示
+                        if (currentQuizData.length > 0) {
+                            renderAllQuestions();
+                            updatePageDisplay();
+                            updatePageDots();
+                            updateButtonStates();
+                            updateProgress();
+                        } else {
+                            initQuiz();
+                        }
+                    } else {
+                        // 超过1小时清除旧数据
+                        clearSavedAnswers();
+                        initQuiz();
+                    }
+                } else {
+                    initQuiz();
+                }
+            } catch (e) {
+                console.error('加载答题进度失败：', e);
+                clearSavedAnswers();
+                initQuiz();
+            }
+        }
+
+        /**
+         * 清除本地存储的答案
+         */
+        function clearSavedAnswers() {
+            try {
+                localStorage.removeItem('miaoXiuQuizProgress');
+            } catch (e) {
+                console.error('清除答题进度失败：', e);
+            }
+        }
+
+        // 监听页面关闭事件，保存进度
+        window.addEventListener('beforeunload', function () {
+            if (!isSubmitted) {
+                saveAnswers();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,836 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苗绣制作流程详解</title>
+    <!-- 引入FontAwesome图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* 基础重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: "思源黑体", "Source Han Sans CN", "微软雅黑", sans-serif;
+            background-color: #f8f9fa;
+            background-image: radial-gradient(#e6f0f5 1px, transparent 1px), radial-gradient(#e6f0f5 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+            min-height: 100vh;
+            color: #2d3748;
+            line-height: 1.7;
+        }
+
+        /* 容器样式 */
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* 头部样式 */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+            .header::after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 120px;
+                height: 4px;
+                background: linear-gradient(90deg, #1a73e8, #34a853);
+                border-radius: 2px;
+            }
+
+        .title {
+            font-size: 36px;
+            color: #1a365d;
+            margin-bottom: 15px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+        }
+
+            .title::before,
+            .title::after {
+                content: "\f0eb";
+                font-family: "FontAwesome";
+                margin: 0 15px;
+                color: #34a853;
+                font-size: 28px;
+            }
+
+        .subtitle {
+            font-size: 18px;
+            color: #718096;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            padding: 10px 20px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+            z-index: 100;
+        }
+
+            .back-btn::before {
+                content: "\f060";
+                font-family: "FontAwesome";
+                margin-right: 8px;
+            }
+
+            .back-btn:hover {
+                background: #0d66d0;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(26, 115, 232, 0.3);
+            }
+
+        /* 进度条 */
+        .progress-container {
+            max-width: 800px;
+            margin: 0 auto 50px;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+            .progress-bar::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 0;
+                width: 100%;
+                height: 3px;
+                background-color: #e8f0fe;
+                transform: translateY(-50%);
+                z-index: 1;
+            }
+
+        .progress-fill {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1a73e8, #34a853);
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-step {
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border: 3px solid #e8f0fe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #718096;
+            font-weight: bold;
+            position: relative;
+            z-index: 3;
+        }
+
+            .progress-step.active {
+                border-color: #1a73e8;
+                background-color: #1a73e8;
+                color: white;
+            }
+
+        .progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .progress-label {
+            width: 80px;
+            text-align: center;
+            transform: translateX(-25px);
+        }
+
+        /* 步骤内容 */
+        .process-content {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .process-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #f0f7ff;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1a365d 0%, #2d527c 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-number {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin-right: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 35px;
+        }
+
+        .card-description {
+            font-size: 17px;
+            color: #4a5568;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            text-align: justify;
+        }
+
+        .key-points {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e8f4f8 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #1a73e8;
+        }
+
+        .key-title {
+            display: flex;
+            align-items: center;
+            color: #1a365d;
+            font-size: 19px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+            .key-title::before {
+                content: "\f058";
+                font-family: "FontAwesome";
+                margin-right: 10px;
+                color: #34a853;
+                font-size: 20px;
+            }
+
+        .key-list {
+            list-style: none;
+        }
+
+        .key-item {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+            .key-item::before {
+                content: "\f0da";
+                font-family: "FontAwesome";
+                position: absolute;
+                left: 0;
+                top: 2px;
+                color: #1a73e8;
+                font-size: 12px;
+            }
+
+            .key-item:last-child {
+                margin-bottom: 0;
+            }
+
+        /* 图片容器 */
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+            justify-content: center;
+        }
+
+        .gallery-item {
+            flex: 1;
+            min-width: 280px;
+            max-width: 380px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+            transition: all 0.4s ease;
+        }
+
+            .gallery-item:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+            }
+
+        .gallery-img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover .gallery-img {
+            transform: scale(1.05);
+        }
+
+        .gallery-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            color: white;
+            padding: 15px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .gallery-item:hover .gallery-caption {
+            opacity: 1;
+        }
+
+        /* 装饰元素 */
+        .card-decoration {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.05), rgba(52, 168, 83, 0.05));
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .gallery-item {
+                max-width: 320px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .title {
+                font-size: 32px;
+            }
+
+            .card-header {
+                padding: 20px 25px;
+            }
+
+            .card-body {
+                padding: 28px;
+            }
+
+            .image-gallery {
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .back-btn {
+                top: 20px;
+                left: 20px;
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            .header {
+                margin-bottom: 40px;
+            }
+
+            .title {
+                font-size: 26px;
+            }
+
+                .title::before,
+                .title::after {
+                    font-size: 22px;
+                    margin: 0 10px;
+                }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .progress-container {
+                margin-bottom: 35px;
+            }
+
+            .progress-label {
+                font-size: 12px;
+                width: 60px;
+                transform: translateX(-15px);
+            }
+
+            .card-title {
+                font-size: 21px;
+            }
+
+            .card-number {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .key-title {
+                font-size: 18px;
+            }
+
+            .image-gallery {
+                gap: 15px;
+            }
+
+            .gallery-item {
+                min-width: 100%;
+                max-width: 100%;
+            }
+
+            .gallery-img {
+                height: 200px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .title {
+                font-size: 22px;
+            }
+
+            .progress-step {
+                width: 25px;
+                height: 25px;
+                font-size: 12px;
+            }
+
+            .progress-label {
+                display: none;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .card-number {
+                margin-right: 0;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .card-description {
+                font-size: 16px;
+            }
+
+            .key-points {
+                padding: 20px 15px;
+            }
+
+            .key-title {
+                font-size: 17px;
+            }
+
+            .key-item {
+                font-size: 15px;
+            }
+
+            .gallery-img {
+                height: 180px;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .process-card {
+            animation: fadeIn 0.6s ease forwards;
+            opacity: 0;
+        }
+
+            .process-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+
+            .process-card:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .process-card:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+
+            .process-card:nth-child(4) {
+                animation-delay: 0.4s;
+            }
+
+            .process-card:nth-child(5) {
+                animation-delay: 0.5s;
+            }
+    </style>
+</head>
+<body>
+    <button class="back-btn" id="backBtn">返回首页</button>
+
+    <div class="container">
+        <header class="header">
+            <h1 class="title">苗绣制作流程详解</h1>
+            <p class="subtitle">传承千年的苗族刺绣工艺，蕴含着深厚的文化底蕴与精湛的手工技艺，每一道工序都凝聚着匠人的心血与智慧</p>
+        </header>
+
+        <!-- 进度条导航 -->
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-step active" data-step="1">1</div>
+                <div class="progress-step" data-step="2">2</div>
+                <div class="progress-step" data-step="3">3</div>
+                <div class="progress-step" data-step="4">4</div>
+                <div class="progress-step" data-step="5">5</div>
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-labels">
+                <div class="progress-label">选材备料</div>
+                <div class="progress-label">图案拓印</div>
+                <div class="progress-label">刺绣实施</div>
+                <div class="progress-label">修饰整理</div>
+                <div class="progress-label">验收保存</div>
+            </div>
+        </div>
+
+        <!-- 流程内容 -->
+        <div class="process-content">
+            <!-- 步骤1：选材备料 -->
+            <div class="process-card" data-step="1">
+                <div class="card-decoration"></div>
+                <div class="card-header">
+                    <div class="card-number">01</div>
+                    <h2 class="card-title">选材备料</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-description">
+                        苗绣选材注重天然质感与实用性的完美结合，是保证成品质量的基础环节。面料优先选用当地生产的纯棉布、麻布或丝绸，这些天然面料透气性好、韧性强，能够很好地承载复杂的针法和色彩。丝线则以天然蚕丝线为主，颜色多采用植物染料染制，色彩浓郁且持久不褪色，完美呈现苗族刺绣的独特韵味。
+                    </p>
+
+                    <div class="key-points">
+                        <h3 class="key-title">关键要点</h3>
+                        <ul class="key-list">
+                            <li class="key-item">面料需提前清洗、晾晒，去除杂质并增强丝线附着力，确保刺绣过程中面料不易变形</li>
+                            <li class="key-item">丝线按图案需求分类整理，常用红、绿、蓝、黄等对比强烈的色彩，体现苗族审美特色</li>
+                            <li class="key-item">准备合适的绣花针（依面料厚度选用不同型号）、木质绷架、锋利剪刀等专业工具</li>
+                            <li class="key-item">植物染料需提前调配，确保色彩均匀一致，符合传统苗绣的色彩要求</li>
+                        </ul>
+                    </div>
+
+                    <div class="image-gallery">
+                        <div class="gallery-item">
+                            <img src="images/process/step1-1.jpg" alt="苗绣面料" class="gallery-img">
+                            <div class="gallery-caption">天然纯棉面料，质地柔软韧性强</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step1-2.jpg" alt="天然丝线" class="gallery-img">
+                            <div class="gallery-caption">植物染色丝线，色彩浓郁持久</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step1-3.jpg" alt="绣花工具" class="gallery-img">
+                            <div class="gallery-caption">专业绣花工具套装，匠心之选</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤2：图案设计与拓印 -->
+            <div class="process-card" data-step="2">
+                <div class="card-decoration"></div>
+                <div class="card-header">
+                    <div class="card-number">02</div>
+                    <h2 class="card-title">图案设计与拓印</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-description">
+                        苗绣图案多源于自然万物与苗族文化符号，设计时严格遵循"以形寓意"的传统原则。传统图案包括蝴蝶、龙、凤、花卉、几何纹样等，每种图案都承载着特定的文化内涵与美好寓意，如蝴蝶象征生命繁衍，龙纹代表吉祥如意。设计完成后，通过传统拓印工艺将图案精准转移到面料上。
+                    </p>
+
+                    <div class="key-points">
+                        <h3 class="key-title">关键要点</h3>
+                        <ul class="key-list">
+                            <li class="key-item">传统采用"粉印法"（用竹笔蘸草木灰绘制）或"针描法"（用针按图案扎孔，再撒粉显形），保留传统工艺特色</li>
+                            <li class="key-item">现代可结合铅笔轻描辅助，确保图案清晰且不损伤面料，兼顾传统与实用</li>
+                            <li class="key-item">图案位置需居中对称，符合苗绣传统审美规范，注重整体构图的平衡与和谐</li>
+                            <li class="key-item">拓印后需检查图案清晰度，确保每一个细节都能准确呈现，为后续刺绣奠定基础</li>
+                        </ul>
+                    </div>
+
+                    <div class="image-gallery">
+                        <div class="gallery-item">
+                            <img src="images/process/step2-1.jpg" alt="苗绣图案手稿" class="gallery-img">
+                            <div class="gallery-caption">传统苗绣图案手稿，寓意吉祥</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step2-2.jpg" alt="拓印过程" class="gallery-img">
+                            <div class="gallery-caption">传统粉印法拓印，工艺精湛</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step2-3.jpg" alt="拓印完成面料" class="gallery-img">
+                            <div class="gallery-caption">拓印完成的面料，图案清晰</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤3：刺绣针法实施 -->
+            <div class="process-card" data-step="3">
+                <div class="card-decoration"></div>
+                <div class="card-header">
+                    <div class="card-number">03</div>
+                    <h2 class="card-title">刺绣针法实施</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-description">
+                        苗绣针法丰富多样，是形成其独特艺术风格的核心环节。不同苗族支系的绣法各有侧重，主要包括平绣、辫绣、打籽绣、绉绣、缠绣等多种经典针法。刺绣时需将面料牢固固定在绷架上，保持面料平整 taut，按照图案轮廓和色彩要求逐步绣制，每一针每一线都凝聚着匠人的心血。
+                    </p>
+
+                    <div class="key-points">
+                        <h3 class="key-title">关键要点</h3>
+                        <ul class="key-list">
+                            <li class="key-item">平绣：针脚平行均匀，用于填充大面积图案，线条流畅自然，色彩过渡柔和</li>
+                            <li class="key-item">辫绣：丝线编织成辫状再绣于面料，立体感强，常用于图案边缘和重点装饰部位</li>
+                            <li class="key-item">打籽绣：丝线绕针形成颗粒状，用于点缀花蕊、眼珠等细节部位，质感独特</li>
+                            <li class="key-item">绣制时力度均匀，避免丝线松紧不一，确保图案平整美观，富有层次感</li>
+                            <li class="key-item">遵循"由浅入深、由内而外"的绣制顺序，确保色彩搭配协调，图案完整统一</li>
+                        </ul>
+                    </div>
+
+                    <div class="image-gallery">
+                        <div class="gallery-item">
+                            <img src="images/process/step3-1.jpg" alt="平绣针法" class="gallery-img">
+                            <div class="gallery-caption">平绣针法实施，针脚均匀</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step3-2.jpg" alt="辫绣实施" class="gallery-img">
+                            <div class="gallery-caption">辫绣工艺展示，立体感强</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step3-3.jpg" alt="打籽绣效果" class="gallery-img">
+                            <div class="gallery-caption">打籽绣细节效果，质感独特</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤4：修饰与成品整理 -->
+            <div class="process-card" data-step="4">
+                <div class="card-decoration"></div>
+                <div class="card-header">
+                    <div class="card-number">04</div>
+                    <h2 class="card-title">修饰与成品整理</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-description">
+                        刺绣完成后，需进行精细的修饰与整理工作，让成品更显精致完美。修饰环节包括补绣遗漏部位、调整色彩过渡、添加装饰元素（如银饰、珠子、流苏等）；整理环节则聚焦于去除面料上的拓印痕迹、修剪多余丝线、熨烫定型等，每一个细节都力求完美，展现苗绣的精湛工艺。
+                    </p>
+
+                    <div class="key-points">
+                        <h3 class="key-title">关键要点</h3>
+                        <ul class="key-list">
+                            <li class="key-item">补绣时需严格匹配原有针法与丝线颜色，确保过渡自然，无明显痕迹</li>
+                            <li class="key-item">熨烫时温度适中（建议80-100℃），避免高温损伤丝线和面料，可垫湿布熨烫</li>
+                            <li class="key-item">成品需用清水轻轻漂洗，去除残留杂质和拓印粉末，然后自然晾干</li>
+                            <li class="key-item">添加装饰元素时需遵循传统风格，银饰、珠子等配件需与刺绣图案协调统一</li>
+                            <li class="key-item">修剪多余丝线时需格外小心，避免剪伤绣面，确保成品整洁美观</li>
+                        </ul>
+                    </div>
+
+                    <div class="image-gallery">
+                        <div class="gallery-item">
+                            <img src="images/process/step4-1.jpg" alt="添加装饰元素" class="gallery-img">
+                            <div class="gallery-caption">添加银饰装饰，锦上添花</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step4-2.jpg" alt="修剪丝线" class="gallery-img">
+                            <div class="gallery-caption">精细修剪丝线，整洁美观</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step4-3.jpg" alt="成品熨烫" class="gallery-img">
+                            <div class="gallery-caption">成品熨烫定型，平整挺括</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤5：成品验收与保存 -->
+            <div class="process-card" data-step="5">
+                <div class="card-decoration"></div>
+                <div class="card-header">
+                    <div class="card-number">05</div>
+                    <h2 class="card-title">成品验收与保存</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-description">
+                        最后环节是严格的成品验收与科学保存。验收需按照苗绣传统工艺标准，全面检查图案完整性、针法一致性、色彩协调性等各项指标；保存则需考虑防潮、防虫、防褪色等因素，采用科学的保存方法，延长成品使用寿命，让这份传统艺术瑰宝得以长久传承。
+                    </p>
+
+                    <div class="key-points">
+                        <h3 class="key-title">关键要点</h3>
+                        <ul class="key-list">
+                            <li class="key-item">验收时重点查看针脚是否牢固、无跳线、无漏绣，图案完整无破损</li>
+                            <li class="key-item">保存时需将成品折叠整齐，放入干燥通风处，可放置天然樟脑丸或薰衣草防虫</li>
+                            <li class="key-item">避免阳光直射，防止丝线褪色，定期晾晒通风（避免暴晒）</li>
+                            <li class="key-item">长期保存建议使用棉质或丝绸收纳袋，避免与硬物摩擦造成损伤</li>
+                            <li class="key-item">定期检查保存状况，发现问题及时处理，确保成品完好无损</li>
+                        </ul>
+                    </div>
+
+                    <div class="image-gallery">
+                        <div class="gallery-item">
+                            <img src="images/process/step5-1.jpg" alt="苗绣成品展示" class="gallery-img">
+                            <div class="gallery-caption">精美苗绣成品，工艺精湛</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step5-2.jpg" alt="成品收纳" class="gallery-img">
+                            <div class="gallery-caption">科学收纳保存，长久传承</div>
+                        </div>
+                        <div class="gallery-item">
+                            <img src="images/process/step5-3.jpg" alt="苗绣成品集锦" class="gallery-img">
+                            <div class="gallery-caption">苗绣成品集锦，艺术瑰宝</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // 返回首页按钮功能
+            $("#backBtn").click(function () {
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = "Default.html";
+                }
+            });
+
+            // 图片加载错误处理
+            $(".gallery-img").on("error", function () {
+                console.log("图片加载失败:", $(this).attr("src"));
+                $(this).attr("src", "images/process/default.jpg");
+                $(this).attr("alt", "苗绣工艺展示图");
+            });
+
+            // 进度条动画
+            const updateProgress = () => {
+                const scrollTop = $(window).scrollTop();
+                const windowHeight = $(window).height();
+                const documentHeight = $(document).height();
+                const scrollPercent = (scrollTop / (documentHeight - windowHeight)) * 100;
+
+                $("#progressFill").css("width", scrollPercent + "%");
+
+                // 更新当前步骤
+                const steps = $(".process-card");
+                steps.each(function () {
+                    const step = $(this);
+                    const stepTop = step.offset().top - windowHeight / 2;
+                    const stepBottom = stepTop + step.height();
+
+                    if (scrollTop >= stepTop && scrollTop < stepBottom) {
+                        const stepNum = step.data("step");
+                        $(".progress-step").removeClass("active");
+                        $(`.progress-step[data-step="${stepNum}"]`).addClass("active");
+
+                        // 激活之前的步骤
+                        for (let i = 1; i < stepNum; i++) {
+                            $(`.progress-step[data-step="${i}"]`).addClass("active");
+                        }
+                    }
+                });
+            };
+
+            // 初始化进度条
+            updateProgress();
+
+            // 滚动时更新进度条
+            $(window).scroll(updateProgress);
+
+            // 平滑滚动到步骤
+            $(".progress-step").click(function () {
+                const stepNum = $(this).data("step");
+                const targetStep = $(`.process-card[data-step="${stepNum}"]`);
+                if (targetStep.length) {
+                    $("html, body").animate({
+                        scrollTop: targetStep.offset().top - 100
+                    }, 800);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
