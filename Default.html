@@ -1,10 +1,2717 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8" />
-    <title></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>苗绣文化GIS系统</title>
+
+    <!-- 引入外部依赖库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/digidem/leaflet-side-by-side@gh-pages/leaflet-side-by-side.js"></script>
+    <!-- 引入Leaflet热力图插件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+
+    <!-- 页面样式（优化版） -->
+    <style>
+        /* 基础重置与全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            margin: 0;
+            font-family: "微软雅黑", "Microsoft YaHei", sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f5f7fa;
+        }
+
+        /* 顶部面板样式（优化版）- 调整按钮位置 */
+        .top-panel {
+            width: 100%;
+            height: 76px;
+            background: linear-gradient(135deg, #2c5282, #3b5a8c);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: relative;
+            z-index: 100;
+        }
+
+        /* 标题区域 - 与左侧面板同宽 */
+        .title-section {
+            width: 400px; /* 与侧边栏宽度一致 */
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 左侧：标题样式调整 */
+        .top-title {
+            font-size: 32px; /* 增大字体 */
+            font-weight: 800;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+            .top-title::before {
+                content: "\f06c";
+                font-family: "FontAwesome";
+                margin-right: 20px;
+                font-size: 36px;
+                color: #ffd166;
+                text-shadow: 0 0 10px rgba(255, 209, 102, 0.5);
+            }
+
+        /* 中间：主要功能按钮组 */
+        .top-left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+            justify-content: center;
+            margin-left: 0; /* 移除之前的margin */
+        }
+
+        /* 右侧：特色功能按钮 */
+        .top-right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .top-process-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+        }
+
+            .top-process-btn:hover {
+                background: rgba(255,255,255,0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(0,0,0,0.18);
+            }
+
+            .top-process-btn:active {
+                transform: translateY(0);
+            }
+
+        /* 右侧特殊按钮样式 */
+        #cloudExperienceBtn {
+            background: linear-gradient(135deg, #e67e22, #d35400) !important;
+        }
+
+            #cloudExperienceBtn:hover {
+                background: linear-gradient(135deg, #d35400, #e67e22) !important;
+            }
+
+        #quizBtn {
+            background: linear-gradient(135deg, #27ae60, #219653) !important;
+        }
+
+            #quizBtn:hover {
+                background: linear-gradient(135deg, #219653, #27ae60) !important;
+            }
+
+        /* 主体容器调整 */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 76px);
+        }
+
+        /* 侧边栏样式（优化版）- 宽度保持400px */
+        .sidebar {
+            width: 400px;
+            background: white;
+            padding: 22px;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+            overflow-y: auto;
+            border-right: 1px solid #f0f2f5;
+            position: relative;
+        }
+
+            .sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .sidebar::-webkit-scrollbar-track {
+                background: #f5f7fa;
+                border-radius: 3px;
+            }
+
+            .sidebar::-webkit-scrollbar-thumb {
+                background: #c9d1d9;
+                border-radius: 3px;
+            }
+
+                .sidebar::-webkit-scrollbar-thumb:hover {
+                    background: #8c9aa8;
+                }
+
+        /* 按钮组样式优化 */
+        .btn-group {
+            margin-bottom: 22px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .sidebar button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #f0f7ff;
+            color: #2c5282;
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-width: 120px;
+        }
+
+            .sidebar button:hover {
+                background: #e1edff;
+                transform: translateY(-1px);
+                box-shadow: 0 3px 8px rgba(44,82,130,0.1);
+            }
+
+            .sidebar button:disabled {
+                cursor: not-allowed;
+                background: #f3f4f6;
+                color: #9ca3af;
+                transform: none;
+                box-shadow: none;
+            }
+
+            /* 按钮激活状态样式 */
+            .sidebar button.active {
+                background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+                color: white;
+                box-shadow: 0 3px 8px rgba(238, 90, 82, 0.2);
+            }
+
+        #originBtn.active {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        #distributionBtn.active {
+            background: linear-gradient(135deg, #2c5282, #4a6fa5);
+            color: white;
+        }
+
+        #animateBtn.active {
+            background: linear-gradient(135deg, #3498db, #2c5282);
+            color: white;
+        }
+
+        #heatmapBtn.active {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        /* 搜索框样式优化 */
+        .search-box {
+            margin-bottom: 24px;
+            display: flex;
+            gap: 12px;
+            position: relative;
+        }
+
+        #miaoxiuSearch {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-sizing: border-box;
+            outline: none;
+            font-size: 15px;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+
+            #miaoxiuSearch:focus {
+                border-color: #4a6fa5;
+                box-shadow: 0 0 0 3px rgba(74,111,165,0.15);
+            }
+
+            #miaoxiuSearch::placeholder {
+                color: #9ca3af;
+            }
+
+        #searchBtn {
+            padding: 12px 20px;
+            background: #2c5282;
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+            #searchBtn:hover {
+                background: #3b5a8c;
+            }
+
+        /* 苗绣列表样式优化 */
+        .miaoxiu-list {
+            margin-top: 15px;
+        }
+
+        .miaoxiu-item {
+            border-bottom: 1px solid #f0f2f5;
+            padding: 16px 0;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 14px 12px;
+            margin-bottom: 8px;
+        }
+
+            .miaoxiu-item:hover {
+                background: #f8fafc;
+                transform: translateX(4px);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            }
+
+            .miaoxiu-item h3 {
+                margin: 0 0 8px 0;
+                font-size: 18px;
+                color: #2c5282;
+                font-weight: 600;
+            }
+
+            .miaoxiu-item p {
+                margin: 5px 0;
+                font-size: 14px;
+                color: #4b5563;
+                line-height: 1.6;
+            }
+
+                .miaoxiu-item p strong {
+                    color: #2d3748;
+                }
+
+        /* 分页控件样式优化 */
+        .page-control {
+            margin-top: 28px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        #pageInfo {
+            font-size: 15px;
+            color: #6b7280;
+            padding: 0 8px;
+        }
+
+        #prevPage, #nextPage {
+            padding: 10px 18px;
+            min-width: 100px;
+        }
+
+        /* 地图容器样式 */
+        .map {
+            flex: 1;
+            border-left: 1px solid #f0f2f5;
+        }
+
+        /* 动画信息面板样式优化 */
+        .animation-info-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+            border: 1px solid #f0f2f5;
+        }
+
+        .animation-info-header {
+            background: linear-gradient(135deg, #3498db, #2c5282);
+            color: white;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+            .animation-info-header::before {
+                content: "\f04b";
+                font-family: "FontAwesome";
+                margin-right: 10px;
+            }
+
+        .close-animation-info {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .close-animation-info:hover {
+                background: rgba(255,255,255,0.3);
+            }
+
+        .animation-info-content {
+            padding: 20px;
+        }
+
+        .animation-info-period {
+            color: #2c5282;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .animation-info-area {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+            .animation-info-area strong {
+                color: #2c5282;
+            }
+
+        .animation-info-desc {
+            color: #444;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .animation-info-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #f0f2f5;
+        }
+
+        .animation-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .animation-control-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        #pauseBtn {
+            background: #f39c12;
+            color: white;
+        }
+
+            #pauseBtn:hover {
+                background: #e67e22;
+            }
+
+        #resumeBtn {
+            background: #27ae60;
+            color: white;
+        }
+
+            #resumeBtn:hover {
+                background: #219653;
+            }
+
+        #stopBtn {
+            background: #e74c3c;
+            color: white;
+        }
+
+            #stopBtn:hover {
+                background: #c0392b;
+            }
+
+        .animation-progress {
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2c5282);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* 图片弹窗样式优化 */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(8px);
+        }
+
+        .image-content {
+            text-align: center;
+            position: relative;
+            max-width: 90%;
+            max-height: 90vh;
+        }
+
+        .current-img {
+            max-width: 95%;
+            max-height: 85vh;
+            border: 8px solid white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .img-nav {
+            margin-top: 25px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        /* 图片导航按钮样式 */
+        .img-prev, .img-next {
+            padding: 12px 28px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #2c5282, #4a6fa5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(44,82,130,0.2);
+            width: 150px;
+        }
+
+            .img-prev:hover, .img-next:hover {
+                opacity: 0.95;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(44,82,130,0.3);
+            }
+
+            .img-prev:active, .img-next:active {
+                transform: translateY(0);
+            }
+
+        .close-modal {
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            font-size: 36px;
+            color: white;
+            cursor: pointer;
+            background: rgba(0,0,0,0.3);
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+        }
+
+            .close-modal:hover {
+                background: rgba(0,0,0,0.5);
+                transform: rotate(90deg);
+            }
+
+        /* 地图卷帘样式优化 */
+        .leaflet-sbs-divider {
+            background-color: #4a6fa5;
+            width: 5px;
+            cursor: ew-resize;
+        }
+
+        .leaflet-sbs-handle {
+            background-color: #2c5282;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            margin-top: -13px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.3);
+        }
+
+            .leaflet-sbs-handle:hover {
+                background-color: #ffd166;
+                border-color: #2c5282;
+                transform: scale(1.2);
+            }
+
+        /* 自定义地图标记样式 */
+        .custom-map-marker {
+            z-index: 10;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+            .custom-map-marker:hover {
+                transform: scale(1.25);
+                filter: brightness(1.15);
+                box-shadow: 0 0 15px rgba(44,82,130,0.4);
+            }
+
+        /* 小车移动图标样式 */
+        .car-icon {
+            z-index: 1001 !important;
+        }
+
+        /* 起源弹窗图片样式 */
+        .origin-popup-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 2px solid #f0f7ff;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        /* 自定义定位标记样式 */
+        .custom-locate-icon {
+            z-index: 1000;
+        }
+
+        /* 查看图片按钮样式 */
+        .show-img-btn {
+            margin-top: 12px;
+            padding: 10px 20px;
+            font-size: 15px;
+            background: linear-gradient(135deg, #2c5282, #4a6fa5);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(44, 82, 130, 0.25);
+            width: 100%;
+        }
+
+            .show-img-btn::before {
+                content: "\f03e";
+                font-family: "FontAwesome";
+                font-size: 16px;
+            }
+
+            .show-img-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px rgba(44, 82, 130, 0.35);
+                background: linear-gradient(135deg, #4a6fa5, #2c5282);
+            }
+
+            .show-img-btn:active {
+                transform: translateY(0);
+            }
+
+        /* 按钮图标样式 */
+        #processBtn::before {
+            content: "\f0eb";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #schoolBtn::before {
+            content: "\f19d";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #patternBtn::before {
+            content: "\f53f";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #inheritorBtn::before {
+            content: "\f2bb";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #exhibitionBtn::before {
+            content: "\f03d";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #cloudExperienceBtn::before {
+            content: "\f0ac";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #quizBtn::before {
+            content: "\f128";
+            font-family: "FontAwesome";
+            font-size: 16px;
+        }
+
+        #mapTypeSwitch::before {
+            content: "\f0ac";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #卷帘Btn::before {
+            content: "\f065";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #originBtn::before {
+            content: "\f1b9";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #distributionBtn::before {
+            content: "\f277";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #animateBtn::before {
+            content: "\f04b";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #heatmapBtn::before {
+            content: "\f06d";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #searchBtn::before {
+            content: "\f002";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #prevPage::before {
+            content: "\f104";
+            font-family: "FontAwesome";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        #nextPage::after {
+            content: "\f105";
+            font-family: "FontAwesome";
+            margin-left: 8px;
+            font-size: 16px;
+        }
+
+        /* 热力图样式 */
+        .heatmap-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            font-size: 13px;
+            width: 180px;
+        }
+
+            .heatmap-legend h4 {
+                margin: 0 0 8px 0;
+                color: #2c5282;
+                font-size: 14px;
+                text-align: center;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 5px;
+            }
+
+        .heatmap-gradient {
+            height: 12px;
+            width: 100%;
+            background: linear-gradient(to right, #00ff00, #ffff00, #ff0000);
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        .heatmap-labels {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 11px;
+        }
+
+        /* 响应式适配优化 */
+        @media (max-width: 1200px) {
+            .title-section {
+                width: 380px; /* 与响应式侧边栏宽度一致 */
+            }
+
+            .top-title {
+                font-size: 30px;
+            }
+
+                .top-title::before {
+                    font-size: 32px;
+                    margin-right: 15px;
+                }
+
+            .top-process-btn {
+                font-size: 14px;
+                padding: 9px 15px;
+            }
+
+            .sidebar {
+                width: 380px;
+            }
+
+            .animation-info-panel {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .title-section {
+                width: 350px;
+            }
+
+            .top-title {
+                font-size: 28px;
+            }
+
+                .top-title::before {
+                    font-size: 30px;
+                    margin-right: 12px;
+                }
+
+            .top-process-btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* 移动端顶部面板优化 */
+            .top-panel {
+                height: auto;
+                padding: 15px;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+
+            .title-section {
+                width: 100%;
+                padding-left: 0;
+                margin-bottom: 15px;
+                justify-content: center;
+            }
+
+            .top-title {
+                font-size: 26px;
+                justify-content: center;
+                text-align: center;
+            }
+
+                .top-title::before {
+                    margin-right: 10px;
+                    font-size: 28px;
+                }
+
+            .top-left-section {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 10px;
+                order: 3;
+            }
+
+            .top-right-section {
+                width: 100%;
+                justify-content: center;
+                order: 4;
+            }
+
+            .top-process-btn {
+                margin-bottom: 10px;
+                flex: 1;
+                min-width: 110px;
+                justify-content: center;
+            }
+
+            /* 移动端侧边栏优化 */
+            .sidebar {
+                width: 350px;
+                padding: 18px;
+            }
+
+            .btn-group {
+                gap: 10px;
+            }
+
+            .sidebar button {
+                padding: 9px 15px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+
+            /* 移动端隐藏按钮文字，只显示图标 */
+            .top-process-btn span {
+                display: none;
+            }
+
+            .top-process-btn::before {
+                margin-right: 0;
+                font-size: 18px;
+            }
+
+            .sidebar button span {
+                display: none;
+            }
+
+            .sidebar button::before {
+                margin-right: 0 !important;
+            }
+
+            .origin-popup-img {
+                height: 150px;
+            }
+
+            .animation-info-panel {
+                width: 300px;
+                top: 70px;
+                right: 10px;
+            }
+
+            .animation-info-content {
+                padding: 15px;
+            }
+
+            .heatmap-legend {
+                bottom: 10px;
+                right: 10px;
+                width: 150px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .top-panel {
+                padding: 12px;
+            }
+
+            .top-title {
+                font-size: 24px;
+            }
+
+                .top-title::before {
+                    font-size: 26px;
+                    margin-right: 8px;
+                }
+
+            .top-process-btn {
+                padding: 7px 12px;
+                min-width: 80px;
+            }
+
+            .sidebar {
+                width: 320px;
+                padding: 15px;
+            }
+
+            .miaoxiu-item h3 {
+                font-size: 16px;
+            }
+
+            .miaoxiu-item p {
+                font-size: 13px;
+            }
+
+            .img-nav {
+                gap: 15px;
+            }
+
+            .img-prev, .img-next {
+                padding: 10px 20px;
+                font-size: 14px;
+                width: 120px;
+            }
+
+            .close-modal {
+                top: -40px;
+                right: -40px;
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+                font-size: 28px;
+            }
+
+            .animation-info-panel {
+                width: 280px;
+                top: 60px;
+                right: 5px;
+            }
+
+            .animation-info-header {
+                padding: 12px 15px;
+                font-size: 16px;
+            }
+
+            .animation-info-content {
+                padding: 12px;
+            }
+
+            .animation-info-period {
+                font-size: 20px;
+            }
+
+            .heatmap-legend {
+                width: 130px;
+                padding: 8px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* 添加分隔线样式 */
+        .top-section-divider {
+            width: 1px;
+            height: 30px;
+            background: rgba(255,255,255,0.2);
+            margin: 0 10px;
+        }
+    </style>
 </head>
 <body>
+    <!-- 顶部面板：左侧为标题，中间为主要功能按钮，右侧为特色功能按钮 -->
+    <div class="top-panel">
+        <!-- 左侧：标题区域 -->
+        <div class="title-section">
+            <div class="top-title">苗绣文化GIS系统</div>
+        </div>
 
+        <!-- 中间：主要功能按钮组 -->
+        <div class="top-left-section">
+            <button id="processBtn" class="top-process-btn"><span>制作流程</span></button>
+            <button id="schoolBtn" class="top-process-btn"><span>苗绣流派</span></button>
+            <button id="patternBtn" class="top-process-btn"><span>图案释义</span></button>
+            <button id="inheritorBtn" class="top-process-btn"><span>传承人故事</span></button>
+            <button id="exhibitionBtn" class="top-process-btn"><span>数字展厅</span></button>
+        </div>
+
+        <!-- 右侧：特色功能按钮 -->
+        <div class="top-section-divider"></div>
+        <div class="top-right-section">
+            <button id="cloudExperienceBtn" class="top-process-btn"><span>云体验苗绣</span></button>
+            <button id="quizBtn" class="top-process-btn"><span>苗绣答题</span></button>
+        </div>
+    </div>
+
+    <!-- 主体容器：侧边栏 + 地图 -->
+    <div class="main-container">
+        <!-- 侧边栏：保留原有所有按钮、搜索框、列表、分页 -->
+        <div class="sidebar">
+            <div class="btn-group">
+                <button id="mapTypeSwitch"><span>切换到卫星地图</span></button>
+                <button id="卷帘Btn"><span>地图卷帘</span></button>
+            </div>
+            <div class="btn-group">
+                <button id="originBtn"><span>发展起源</span></button>
+                <button id="distributionBtn"><span>苗绣分布</span></button>
+                <button id="animateBtn"><span>动画展示</span></button>
+                <button id="heatmapBtn"><span>热力图</span></button> <!-- 新增热力图按钮 -->
+            </div>
+            <div class="search-box">
+                <input type="text" id="miaoxiuSearch" placeholder="搜索苗绣（名称/地区/流派）" />
+                <button id="searchBtn"><span>搜索</span></button>
+            </div>
+            <div class="miaoxiu-list" id="miaoxiuList">
+                <!-- 苗绣列表将通过JS动态加载 -->
+            </div>
+            <div class="page-control">
+                <button id="prevPage"><span>上一页</span></button>
+                <span id="pageInfo">第1页 / 共0页</span>
+                <button id="nextPage"><span>下一页</span></button>
+            </div>
+        </div>
+
+        <!-- 地图容器 -->
+        <div class="map" id="map"></div>
+
+        <!-- 热力图图例 -->
+        <div class="heatmap-legend" id="heatmapLegend">
+            <h4>苗绣分布热力图</h4>
+            <div class="heatmap-gradient"></div>
+            <div class="heatmap-labels">
+                <span>稀疏</span>
+                <span>密集</span>
+            </div>
+            <p style="margin: 8px 0 0 0; font-size: 11px; color: #888; text-align: center;">颜色越红表示苗绣分布越密集</p>
+        </div>
+    </div>
+
+    <!-- 动画信息面板 -->
+    <div class="animation-info-panel" id="animationInfoPanel">
+        <div class="animation-info-header">
+            苗绣发展历程
+            <button class="close-animation-info" id="closeAnimationInfo">×</button>
+        </div>
+        <div class="animation-info-content">
+            <div class="animation-info-period" id="animationPeriod">原始社会</div>
+            <div class="animation-info-area">
+                <strong>地区：</strong><span id="animationArea">长江、黄河中下游流域</span>
+            </div>
+            <div class="animation-info-desc" id="animationDesc">
+                苗族先祖濮人流行雕题文身习俗，通过针刺皮肤并涂抹植物汁液形成永久花纹，图案多为图腾崇拜的自然意象。这种身体装饰艺术孕育了苗绣的原始审美，为后来织物刺绣奠定了文化基础与技艺雏形。
+            </div>
+            <img src="images/origin/origin1.jpg" alt="苗绣图片" class="animation-info-img" id="animationImg">
+            <div class="animation-controls">
+                <button id="pauseBtn" class="animation-control-btn">暂停</button>
+                <button id="resumeBtn" class="animation-control-btn">继续</button>
+                <button id="stopBtn" class="animation-control-btn">停止</button>
+            </div>
+            <div class="animation-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="currentStep">第1站</span>
+                    <span id="totalSteps">共5站</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片弹窗 -->
+    <div class="image-modal" id="imageModal">
+        <div class="close-modal">×</div>
+        <div class="image-content">
+            <img src="" alt="苗绣图片" class="current-img" id="currentImg" />
+            <div class="img-nav">
+                <button class="img-prev">上一张</button>
+                <button class="img-next">下一张</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心逻辑（纯前端版本，数据嵌入在JS中） -->
+    <script>
+        // 全局变量初始化
+        let map, vectorLayer, satelliteLayer, sideBySideControl;
+        let originMarkers = [];
+        let originLines = [];
+        let distributionMarkers = [];
+        let isSideBySideActive = false;
+        let currentMapType = "vector";
+        let miaoxiuData = [];
+        let currentPage = 1;
+        let pageSize = 2; // 每页显示2条数据
+        let currentMiaoxiuImages = [];
+        let currentImgIndex = 0;
+
+        // 动画相关变量
+        let animationInterval;
+        let currentAnimationIndex = 0;
+        let carMarker = null;
+        let isAnimationRunning = false;
+        let isAnimationPaused = false;
+        let animationProgress = 0;
+        let currentSegmentProgress = 0;
+        let totalSegments = 0;
+
+        // 热力图相关变量
+        let heatmapLayer = null;
+        let isHeatmapActive = false;
+
+        // 功能状态变量
+        let isOriginActive = false;
+        let isDistributionActive = false;
+        let isAnimateActive = false;
+
+        // 天地图密钥
+        const TIANDITU_KEY = "285ce646099615952dee8928c3ec1799";
+
+        // 苗绣发展起源数据（已删除民国时期数据）
+        const originData = [
+            {
+                period: "原始社会",
+                area: "长江、黄河中下游流域",
+                desc: "苗族先祖濮人流行雕题文身习俗，通过针刺皮肤并涂抹植物汁液形成永久花纹，图案多为图腾崇拜的自然意象。这种身体装饰艺术孕育了苗绣的原始审美，为后来织物刺绣奠定了文化基础与技艺雏形。",
+                lat: 33.88,
+                lng: 112.55,
+                photo: "images/origin/origin1.jpg"
+            },
+            {
+                period: "春秋战国时期",
+                area: "沅江流域、乌江流域",
+                desc: "濮人后裔南蛮部落掌握成熟的蚕桑养殖与纺织技术，开始将传统图腾图案绣于麻布、丝绸之上。此时的刺绣以辫绣、平绣为主，色彩以红、黑、蓝为主色调，题材涵盖龙凤、花鸟、几何纹样，成为部落身份标识与祭祀礼仪的重要载体。",
+                lat: 28.91,
+                lng: 112.11,
+                photo: "images/origin/origin2.jpg"
+            },
+            {
+                period: "唐末宋初",
+                area: "贵州黔西北地区、剑河县",
+                desc: "受战乱影响，苗族大规模迁入贵州山区，与当地土著文化深度融合。苗绣技艺吸收了彝族、侗族的刺绣技法，出现打籽绣、锡绣等新工艺。图案开始融入山地农耕文化元素，如梯田、稻穗、蛙纹等，形成了构图饱满、色彩艳丽的初步风格。",
+                lat: 27.01,
+                lng: 105.78,
+                photo: "images/origin/origin3.jpg"
+            },
+            {
+                period: "元明清时期",
+                area: "贵州雷山县、贵阳花溪区、湖南湘西",
+                desc: "苗族分布格局趋于稳定，各地形成独特的刺绣流派：黔东南派以精美的绉绣和马尾绣著称，图案繁密复杂；贵阳派擅长用金银线绣，风格华丽；湘西派则以简洁明快的几何纹样为特色。苗绣成为苗族女性必备的生活技能，承载着族群历史记忆与文化传承。",
+                lat: 26.03,
+                lng: 107.92,
+                photo: "images/origin/origin4.jpg"
+            },
+            {
+                period: "当代",
+                area: "湖南凤凰县、贵州凯里市",
+                desc: "苗绣被列入国家级非物质文化遗产名录，传统技艺得到系统保护与传承。现代苗绣在保留传统图案与技法的基础上，融入现代设计理念，开发出服饰、家居装饰等多元化产品。年轻一代绣娘通过电商平台将苗绣推向国际市场，使这一古老艺术在当代焕发出新的生命力。",
+                lat: 27.73,
+                lng: 110.3,
+                photo: "images/origin/origin5.jpg"
+            }
+        ];
+
+        // 苗绣数据（直接从TXT文件内容转换而来）
+        const embeddedMiaoxiuData = [
+            {
+                "Id": 1,
+                "Name": "黔东南苗绣",
+                "Area": "贵州黔东南苗族侗族自治州（雷山、剑河）",
+                "School": "黔东南流派（最具影响力）",
+                "Tech": "打籽绣、辫绣、绉绣、双针锁绣",
+                "Desc": "色彩浓烈（红、绿、蓝、黄对比强烈），纹样以龙、凤、蝶、鱼、几何纹为主，承载苗族迁徙史和图腾信仰，多用于盛装服饰、背扇、银饰配套绣片。",
+                "Lat": 26.25,
+                "Lng": 108.27,
+                "Images": ["images/miaoxiu1.jpg", "images/miaoxiu2.jpg", "images/miaoxiu3.jpg"]
+            },
+            {
+                "Id": 2,
+                "Name": "黔西北苗绣",
+                "Area": "贵州毕节、六盘水及云南昭通",
+                "School": "黔西北流派（古朴厚重）",
+                "Tech": "挑花、贴布绣",
+                "Desc": "风格古朴庄重，以青、黑为底，搭配红、白、黄等亮色丝线，纹样多为抽象几何纹、卷草纹，少具象图案，多用于衣领、袖口、围裙，简洁大气。",
+                "Lat": 27.33,
+                "Lng": 105.28,
+                "Images": ["images/miaoxiu4.jpg", "images/miaoxiu5.jpg", "images/miaoxiu6.jpg"]
+            },
+            {
+                "Id": 3,
+                "Name": "湘西苗绣",
+                "Area": "湖南湘西土家族苗族自治州（凤凰、吉首）",
+                "School": "湘西流派（融合湘绣风格）",
+                "Tech": "平绣、缠绣",
+                "Desc": "受湘绣工艺影响较深，针法细腻，色彩清雅（蓝、绿、粉为主），纹样兼具写实与抽象，常见牡丹、荷花、鸟类等吉祥图案，多用于服饰衣襟、头巾、手帕。",
+                "Lat": 27.93,
+                "Lng": 109.73,
+                "Images": ["images/miaoxiu7.jpg", "images/miaoxiu8.jpg"]
+            },
+            {
+                "Id": 4,
+                "Name": "川渝苗绣",
+                "Area": "重庆酉阳、彭水和四川宜宾、泸州",
+                "School": "川渝流派（小众特色）",
+                "Tech": "挑花、十字绣",
+                "Desc": "风格介于黔东南与湘西之间，色彩鲜艳但不张扬，纹样多融合生活场景（农耕、狩猎）与图腾元素，多用于儿童服饰、背扇、荷包，实用性与装饰性兼具。",
+                "Lat": 28.87,
+                "Lng": 108.77,
+                "Images": ["images/miaoxiu9.jpg", "images/miaoxiu10.jpg"]
+            },
+            {
+                "Id": 5,
+                "Name": "滇东苗绣",
+                "Area": "云南曲靖、文山",
+                "School": "滇东流派（简洁明快）",
+                "Tech": "平绣、挑花",
+                "Desc": "风格简洁明快，以红、白、黑为主，纹样多为对称几何纹、条纹，针法以平绣、挑花为主，多用于服饰边角、腰带，简约却不失民族特色。",
+                "Lat": 25.52,
+                "Lng": 103.73,
+                "Images": ["images/miaoxiu11.jpg", "images/miaoxiu12.jpg"]
+            },
+            {
+                "Id": 6,
+                "Name": "剑河锡绣",
+                "Area": "贵州剑河县",
+                "School": "黔东南流派分支",
+                "Tech": "锡丝条绣缀",
+                "Desc": "服饰遗存春秋战国武士戎装的甲胄之风，用锡丝条绣缀图案，工艺独特，纹样多为几何纹和图腾元素，是苗绣中极具辨识度的流派之一。",
+                "Lat": 26.68,
+                "Lng": 108.58,
+                "Images": ["images/miaoxiu13.jpg", "images/miaoxiu14.jpg"]
+            },
+            {
+                "Id": 7,
+                "Name": "贵阳花溪苗绣",
+                "Area": "贵州贵阳花溪区",
+                "School": "黔中流派",
+                "Tech": "数纱而绣（无底稿）",
+                "Desc": "从蜡染底纹上的挑花脱胎而出，形成数纱而绣、不用底稿的独特技法，纹样多为对称几何纹，色彩明快，多用于日常服饰和节日盛装。",
+                "Lat": 26.58,
+                "Lng": 106.63,
+                "Images": ["images/miaoxiu15.jpg", "images/miaoxiu16.jpg"]
+            },
+            {
+                "Id": 8,
+                "Name": "桂北苗绣",
+                "Area": "广西壮族自治区北部（融水、三江）",
+                "School": "桂北流派（银饰结合）",
+                "Tech": "平绣、堆绣",
+                "Desc": "以其与银饰的完美结合而闻名，刺绣图案常为银饰的轮廓和底座。技法上擅长‘堆绣’，使图案具有强烈的立体感。色彩以红、黄、绿为主，对比鲜明，多用于盛装的衣领、胸襟和背扇，显得雍容华贵。",
+                "Lat": 25.27,
+                "Lng": 109.21,
+                "Images": ["images/miaoxiu17.jpg", "images/miaoxiu18.jpg"]
+            },
+            {
+                "Id": 9,
+                "Name": "滇西苗绣",
+                "Area": "云南省西部（大理、保山、德宏）",
+                "School": "滇西流派（异族风情）",
+                "Tech": "平绣、辫绣、十字绣",
+                "Desc": "由于地理位置靠近傣族、白族等少数民族，其风格深受影响。图案中常见傣族的‘缅桂花’和白族的‘扎染’纹样元素。色彩偏好使用明快的蓝、粉、绿，风格清新秀丽，绣品多为头巾、手帕和服饰镶边。",
+                "Lat": 25.69,
+                "Lng": 99.84,
+                "Images": ["images/miaoxiu19.jpg", "images/miaoxiu20.jpg"]
+            },
+            {
+                "Id": 10,
+                "Name": "鄂西苗绣",
+                "Area": "湖北省西部（恩施、宜昌）",
+                "School": "鄂西流派（土家交融）",
+                "Tech": "挑花、纳纱绣",
+                "Desc": "与当地土家族文化深度交融，图案质朴大方，充满生活气息。常用土家织锦的‘西兰卡普’图案作为刺绣底纹。针法以‘纳纱绣’为主，在网格布上进行，纹样多为几何图形和简单的花鸟，色彩沉稳，具有独特的山区民族风格。",
+                "Lat": 30.29,
+                "Lng": 110.28,
+                "Images": ["images/miaoxiu21.jpg", "images/miaoxiu22.jpg"]
+            },
+            {
+                "Id": 11,
+                "Name": "海南苗绣",
+                "Area": "海南省（琼中、保亭、陵水）",
+                "School": "海南流派（海岛风情）",
+                "Tech": "平绣、贴布绣、缠绣",
+                "Desc": "海南苗族自称‘金门’，其刺绣风格独特，受海岛气候和文化影响，色彩以红、黄、绿、蓝为主，对比鲜明。图案多为抽象的几何纹、动植物纹，如‘盘皇图’、‘五谷丰登’等，具有浓郁的热带风情和民族特色。多用于服饰、头巾、腰带等。",
+                "Lat": 19.02,
+                "Lng": 109.74,
+                "Images": ["images/miaoxiu23.jpg", "images/miaoxiu24.jpg"]
+            },
+            {
+                "Id": 12,
+                "Name": "黔南苗绣",
+                "Area": "贵州黔南布依族苗族自治州（都匀、荔波）",
+                "School": "黔南流派（技法融合）",
+                "Tech": "打籽绣、辫绣、平绣、挑花",
+                "Desc": "黔南苗绣融合了黔东南、黔西北等周边地区的刺绣技法，形成了自己独特的风格。图案繁复精美，色彩鲜艳，既有黔东南的浓烈，又有黔西北的古朴。常见的纹样有龙、凤、鱼、蝶、花卉等，多用于盛装服饰、背扇、荷包等。",
+                "Lat": 26.15,
+                "Lng": 107.52,
+                "Images": ["images/miaoxiu25.jpg", "images/miaoxiu26.jpg"]
+            },
+            {
+                "Id": 13,
+                "Name": "滇南苗绣",
+                "Area": "云南省南部（红河、文山、西双版纳）",
+                "School": "滇南流派（异域色彩）",
+                "Tech": "平绣、辫绣、十字绣、堆绣",
+                "Desc": "滇南苗族与东南亚各国苗族交往密切，其刺绣风格深受影响，充满异域色彩。图案多为写实的花鸟、人物、生活场景，色彩以明亮的红、黄、蓝、绿为主，针法细腻，绣品精美，多用于服饰、披肩、挂饰等。",
+                "Lat": 23.39,
+                "Lng": 102.73,
+                "Images": ["images/miaoxiu27.jpg", "images/miaoxiu28.jpg"]
+            },
+            {
+                "Id": 14,
+                "Name": "川南苗绣",
+                "Area": "四川省南部（宜宾、泸州、凉山）",
+                "School": "川南流派（质朴简约）",
+                "Tech": "挑花、平绣、纳纱绣",
+                "Desc": "川南苗绣风格质朴简约，色彩以青、蓝、白、红为主，对比柔和。图案多为对称的几何纹、条纹、花卉纹，针法以挑花为主，工艺精湛，具有浓郁的生活气息。多用于日常服饰、儿童背扇、头巾等。",
+                "Lat": 28.75,
+                "Lng": 104.62,
+                "Images": ["images/miaoxiu29.jpg", "images/miaoxiu30.jpg"]
+            }
+        ];
+
+        // 页面加载完成后初始化
+        $(document).ready(function () {
+            initMap();
+            getMiaoxiuData();
+            bindAllEvents();
+            bindImageModalEvents();
+            bindNewPageEvents();
+            bindAnimationEvents();
+            parseLocateParams();
+        });
+
+        /**
+         * 初始化地图
+         */
+        function initMap() {
+            map = L.map('map', {
+                center: [26.58, 108.27],
+                zoom: 7,
+                zoomControl: true
+            });
+
+            // 矢量图层
+            vectorLayer = L.tileLayer(`https://t{s}.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=${TIANDITU_KEY}`, {
+                subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
+                attribution: '© <a href="http://www.tianditu.gov.cn"target="_blank" > 天地图</a> contributors'
+            }).addTo(map);
+
+            // 卫星图层
+            satelliteLayer = L.tileLayer(`https://t{s}.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=${TIANDITU_KEY}`, {
+                subdomains: ['0', '1', '2', '3', '4', '5', '6', '7'],
+                attribution: '© <a href="http://www.tianditu.gov.cn"target="_blank" > 天地图</a> contributors'
+            });
+
+            // 预加载卫星图层
+            satelliteLayer.on('load', function () {
+                console.log("卫星地图图层已加载，可使用卷帘功能");
+            });
+        }
+
+        /**
+         * 加载苗绣数据（纯前端版本，从嵌入的数据加载）
+         */
+        function getMiaoxiuData() {
+            // 处理数据：若图片列表为空，添加默认图片，并为每个苗绣添加随机数据
+            miaoxiuData = embeddedMiaoxiuData.map((item, index) => {
+                // 为每个苗绣生成独特的随机数据
+                const randomData = generateRandomMiaoxiuData(item, index);
+                return {
+                    ...item,
+                    Images: item.Images && item.Images.length ? item.Images : ["images/miaoxiu_default.jpg"],
+                    // 添加随机生成的动态数据
+                    ...randomData
+                };
+            });
+            loadMiaoxiuList();
+        }
+
+        /**
+         * 为苗绣生成随机数据
+         */
+        function generateRandomMiaoxiuData(item, index) {
+            // 基于苗绣名称和索引生成一个种子值，确保同一苗绣每次显示相同数据
+            const seed = hashString(item.Name + index);
+            const random = seededRandom(seed);
+
+            // 根据流派确定基础分数范围
+            let baseRating, baseViews, baseHeat;
+            switch (item.School) {
+                case "黔东南流派（最具影响力）":
+                    baseRating = 4.5; // 黔东南派通常评价较高
+                    baseViews = 2000;
+                    baseHeat = 90;
+                    break;
+                case "湘西流派（融合湘绣风格）":
+                    baseRating = 4.3;
+                    baseViews = 1800;
+                    baseHeat = 85;
+                    break;
+                case "黔中流派":
+                    baseRating = 4.2;
+                    baseViews = 1500;
+                    baseHeat = 80;
+                    break;
+                case "黔西北流派（古朴厚重）":
+                    baseRating = 4.1;
+                    baseViews = 1200;
+                    baseHeat = 75;
+                    break;
+                case "黔南流派（技法融合）":
+                    baseRating = 4.0;
+                    baseViews = 1000;
+                    baseHeat = 70;
+                    break;
+                default:
+                    baseRating = 4.0;
+                    baseViews = 800;
+                    baseHeat = 65;
+            }
+
+            // 添加随机波动
+            const rating = baseRating + (random() * 0.4 - 0.2); // 基础评分 ±0.2
+            const views = Math.floor(baseViews + (random() * 800 - 400)); // 基础浏览量 ±400
+            const heat = Math.floor(baseHeat + (random() * 20 - 10)); // 基础热度 ±10
+
+            // 根据技法复杂性调整分数
+            const techComplexity = getTechComplexity(item.Tech);
+            const finalRating = Math.min(5.0, Math.max(3.0, rating + techComplexity * 0.1));
+
+            // 随机生成收录日期（2020-2023年之间）
+            const recordYear = 2020 + Math.floor(random() * 4);
+            const recordMonth = Math.floor(random() * 12) + 1;
+            const recordDate = `${recordYear}年${recordMonth}月`;
+
+            // 随机生成保护级别
+            const protectionLevels = ["国家级非遗", "省级非遗", "市级非遗", "县级非遗"];
+            const protectionLevel = protectionLevels[Math.floor(random() * protectionLevels.length)];
+
+            // 随机生成传承状况
+            const inheritanceStatuses = ["良好传承", "正常传承", "需要保护", "濒危传承"];
+            const inheritanceStatus = inheritanceStatuses[Math.floor(random() * inheritanceStatuses.length)];
+
+            return {
+                Rating: parseFloat(finalRating.toFixed(1)),
+                Views: views,
+                Heat: Math.min(100, Math.max(50, heat)),
+                RecordDate: recordDate,
+                ProtectionLevel: protectionLevel,
+                InheritanceStatus: inheritanceStatus
+            };
+        }
+
+        /**
+         * 根据技法评估复杂性
+         */
+        function getTechComplexity(tech) {
+            if (!tech) return 0;
+            const techString = tech.toString().toLowerCase();
+            let complexity = 0;
+
+            if (techString.includes('绉绣') || techString.includes('马尾绣')) complexity += 2;
+            if (techString.includes('打籽绣') || techString.includes('锡绣')) complexity += 1.5;
+            if (techString.includes('辫绣') || techString.includes('平绣')) complexity += 1;
+            if (techString.includes('金银线') || techString.includes('盘金绣')) complexity += 1.2;
+            if (techString.includes('锁绣') || techString.includes('挑花')) complexity += 0.8;
+
+            return Math.min(complexity, 3); // 最大复杂度为3
+        }
+
+        /**
+         * 生成种子随机数
+         */
+        function seededRandom(seed) {
+            let x = Math.sin(seed) * 10000;
+            return function () {
+                x = Math.sin(x) * 10000;
+                return x - Math.floor(x);
+            };
+        }
+
+        /**
+         * 简单字符串哈希函数
+         */
+        function hashString(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash);
+        }
+
+        /**
+         * 加载苗绣列表到侧边栏
+         */
+        function loadMiaoxiuList() {
+            const totalCount = miaoxiuData.length;
+            const totalPage = Math.ceil(totalCount / pageSize);
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalCount);
+            const pageData = miaoxiuData.slice(startIndex, endIndex);
+
+            let html = "";
+
+            if (totalCount === 0) {
+                html = '<div style="text-align:center; padding:20px; color:#999; ">暂无苗绣数据</div>';
+            } else {
+                pageData.forEach((item, index) => {
+                    const dataIndex = startIndex + index;
+                    const shortDesc = item.Desc.length > 60 ? item.Desc.substring(0, 60) + "..." : item.Desc;
+
+                    html += `
+                    <div class="miaoxiu-item" data-index="${dataIndex}">
+                        <h3>${item.Name}</h3>
+                        <p><strong>地区：</strong>${item.Area}</p>
+                        <p><strong>流派：</strong>${item.School}</p>
+                        <p><strong>评分：</strong>${getRatingStars(item.Rating || 4.5, true)} ${item.Rating || 4.5}</p>
+                        <p><strong>简介：</strong>${shortDesc}</p>
+                    </div>
+                    `;
+                });
+            }
+
+            $("#miaoxiuList").html(html);
+            $("#pageInfo").text(`第${currentPage}页 / 共${totalPage}页`);
+            $("#prevPage").prop("disabled", currentPage === 1);
+            $("#nextPage").prop("disabled", currentPage === totalPage);
+        }
+
+        /**
+         * 绑定所有按钮和元素的事件
+         */
+        function bindAllEvents() {
+            // 地图类型切换
+            $("#mapTypeSwitch").click(function () {
+                if (isSideBySideActive) {
+                    map.removeControl(sideBySideControl);
+                    isSideBySideActive = false;
+                    $("#卷帘Btn").text("地图卷帘");
+                }
+
+                if (currentMapType === "vector") {
+                    map.removeLayer(vectorLayer);
+                    map.addLayer(satelliteLayer);
+                    currentMapType = "satellite";
+                    $(this).text("切换到矢量地图");
+                } else {
+                    map.removeLayer(satelliteLayer);
+                    map.addLayer(vectorLayer);
+                    currentMapType = "vector";
+                    $(this).text("切换到卫星地图");
+                }
+            });
+
+            // 地图卷帘功能 - 修复版
+            $("#卷帘Btn").click(function () {
+                if (!isSideBySideActive) {
+                    // 确保两个图层都已添加到地图
+                    if (!map.hasLayer(vectorLayer)) {
+                        map.addLayer(vectorLayer);
+                    }
+                    if (!map.hasLayer(satelliteLayer)) {
+                        map.addLayer(satelliteLayer);
+                    }
+
+                    // 创建卷帘控件
+                    sideBySideControl = L.control.sideBySide(vectorLayer, satelliteLayer, {
+                        padding: 0
+                    });
+                    sideBySideControl.addTo(map);
+
+                    isSideBySideActive = true;
+                    $(this).text("关闭卷帘");
+                    $("#mapTypeSwitch").prop("disabled", true);
+                } else {
+                    // 移除卷帘控件
+                    if (sideBySideControl) {
+                        map.removeControl(sideBySideControl);
+                        sideBySideControl = null;
+                    }
+
+                    // 根据当前地图类型移除不需要的图层
+                    if (currentMapType === "vector") {
+                        map.removeLayer(satelliteLayer);
+                    } else {
+                        map.removeLayer(vectorLayer);
+                    }
+
+                    isSideBySideActive = false;
+                    $(this).text("地图卷帘");
+                    $("#mapTypeSwitch").prop("disabled", false);
+                }
+            });
+
+            // 热力图功能 - 优化版（可以与其他功能叠加）
+            $("#heatmapBtn").click(function () {
+                if (!isHeatmapActive) {
+                    showHeatmap();
+                } else {
+                    hideHeatmap();
+                }
+            });
+
+            // 顶部制作流程按钮事件 - 修改为跳转到独立页面
+            $("#processBtn").click(function () {
+                window.open("process.html", "_blank");
+            });
+
+            // 显示苗绣发展起源（可以与其他功能叠加）
+            $("#originBtn").click(function () {
+                if (!isOriginActive) {
+                    showOrigin();
+                } else {
+                    hideOrigin();
+                }
+            });
+
+            // 显示苗绣分布（可以与其他功能叠加）
+            $("#distributionBtn").click(function () {
+                if (!isDistributionActive) {
+                    showDistribution();
+                } else {
+                    hideDistribution();
+                }
+            });
+
+            // 搜索功能
+            $("#searchBtn").click(function () {
+                const keyword = $("#miaoxiuSearch").val().trim().toLowerCase();
+                if (!keyword) {
+                    getMiaoxiuData();
+                    // 不清除其他功能，只清除搜索结果
+                    clearSearchResults();
+                    return;
+                }
+
+                const filteredData = miaoxiuData.filter(item =>
+                    item.Name.toLowerCase().includes(keyword) ||
+                    item.Area.toLowerCase().includes(keyword) ||
+                    item.School.toLowerCase().includes(keyword)
+                );
+
+                currentPage = 1;
+                miaoxiuData = filteredData;
+                loadMiaoxiuList();
+
+                // 显示搜索结果标记（不清除其他功能）
+                showSearchResults(filteredData);
+            });
+
+            // 侧边栏列表项点击
+            $("#miaoxiuList").on("click", ".miaoxiu-item", function () {
+                const dataIndex = $(this).data("index");
+                const item = miaoxiuData[dataIndex];
+                if (!item) return;
+
+                // 只清除搜索结果，保留其他功能
+                clearSearchResults();
+
+                map.setView([item.Lat, item.Lng], 10);
+                const marker = L.marker([item.Lat, item.Lng], {
+                    icon: createCustomIcon('#27ae60')
+                })
+                .addTo(map)
+                .bindPopup(createEnhancedMiaoxiuPopupContent(item))
+                .openPopup();
+
+                distributionMarkers.push(marker);
+                currentMiaoxiuImages = item.Images || [];
+            });
+
+            // 分页按钮
+            $("#prevPage").click(() => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadMiaoxiuList();
+                }
+            });
+
+            $("#nextPage").click(() => {
+                const totalPage = Math.ceil(miaoxiuData.length / pageSize);
+                if (currentPage < totalPage) {
+                    currentPage++;
+                    loadMiaoxiuList();
+                }
+            });
+        }
+
+        /**
+         * 显示发展起源（可以与其他功能叠加）
+         */
+        function showOrigin() {
+            // 清除之前的起源标记（如果有）
+            hideOrigin();
+
+            originData.forEach(item => {
+                const popupContent = `
+                <div style="width:280px; font-size:14px;">
+                    <h3 style="color:#e74c3c; margin:0 0 8px 0;">${item.period}</h3>
+                    <img src="${item.photo}" alt="${item.period}苗绣遗迹" class="origin-popup-img" />
+                    <p><strong>地区：</strong>${item.area}</p>
+                    <p style="margin:5px 0; line-height:1.6;">${item.desc}</p>
+                </div>
+                `;
+
+                const marker = L.marker([item.lat, item.lng], {
+                    icon: createCustomIcon('#e74c3c')
+                })
+                .addTo(map)
+                .bindPopup(popupContent);
+
+                originMarkers.push(marker);
+            });
+
+            // 绘制起源迁移路线（简化线路为一条直线）
+            for (let i = 0; i < originData.length - 1; i++) {
+                const line = L.polyline(
+                    [[originData[i].lat, originData[i].lng], [originData[i + 1].lat, originData[i + 1].lng]],
+                    { color: '#e74c3c', weight: 2, opacity: 0.7 }
+                ).addTo(map);
+
+                originLines.push(line);
+            }
+
+            isOriginActive = true;
+            $("#originBtn").addClass("active");
+
+            // 如果这是第一个激活的功能，调整地图视野
+            if (!isDistributionActive && !isHeatmapActive) {
+                const bounds = L.latLngBounds(originData.map(item => [item.lat, item.lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        /**
+         * 隐藏发展起源
+         */
+        function hideOrigin() {
+            originMarkers.forEach(marker => map.removeLayer(marker));
+            originLines.forEach(line => map.removeLayer(line));
+            originMarkers = [];
+            originLines = [];
+            isOriginActive = false;
+            $("#originBtn").removeClass("active");
+        }
+
+        /**
+         * 显示苗绣分布（可以与其他功能叠加）- 丰富信息面板
+         */
+        function showDistribution() {
+            // 清除之前的分布标记（如果有）
+            hideDistribution();
+
+            miaoxiuData.forEach(item => {
+                // 创建包含更丰富信息的弹窗内容
+                const popupContent = createEnhancedMiaoxiuPopupContent(item);
+
+                // 根据流派创建不同颜色的标记
+                const markerColor = getMarkerColorBySchool(item.School);
+                const marker = L.marker([item.Lat, item.Lng], {
+                    icon: createCustomIcon(markerColor)
+                })
+                .addTo(map)
+                .bindPopup(popupContent);
+
+                // 添加点击事件
+                marker.on("popupopen", function () {
+                    currentMiaoxiuImages = item.Images || [];
+                });
+
+                distributionMarkers.push(marker);
+            });
+
+            isDistributionActive = true;
+            $("#distributionBtn").addClass("active");
+
+            // 如果这是第一个激活的功能，调整地图视野
+            if (!isOriginActive && !isHeatmapActive && distributionMarkers.length > 0) {
+                const bounds = L.latLngBounds(miaoxiuData.map(item => [item.Lat, item.Lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        /**
+         * 创建更丰富的苗绣弹窗内容
+         */
+        function createEnhancedMiaoxiuPopupContent(item) {
+            // 获取流派对应的图标和颜色
+            const schoolInfo = getSchoolInfo(item.School);
+            const imgBtn = item.Images && item.Images.length > 0
+                ? `<button class="show-img-btn">查看图片 (${item.Images.length}张)</button>`
+                : "";
+
+            // 根据技法生成标签
+            const techTags = item.Tech ? item.Tech.split('、').map(tech =>
+                `<span style="display:inline-block; padding:3px 8px; background:#e1edff; color:#2c5282; border-radius:4px; font-size:12px; margin:2px;">${tech}</span>`
+            ).join(' ') : "";
+
+            // 生成星级评分
+            const ratingStars = getRatingStars(item.Rating || 4.5);
+
+            return `
+            <div style="width:320px; font-size:14px; font-family: '微软雅黑', sans-serif;">
+                <div style="display:flex; align-items:center; margin-bottom:10px;">
+                    <div style="width:40px; height:40px; border-radius:50%; background:${schoolInfo.color}; display:flex; align-items:center; justify-content:center; margin-right:12px;">
+                        <i class="fa ${schoolInfo.icon}" style="font-size:20px; color:white;"></i>
+                    </div>
+                    <div>
+                        <h3 style="color:#2c5282; margin:0 0 4px 0; font-size:18px; font-weight:bold;">${item.Name}</h3>
+                        <div style="color:#666; font-size:12px;">${schoolInfo.name}</div>
+                    </div>
+                </div>
+
+                <div style="margin:12px 0; padding:12px; background:#f8fafc; border-radius:6px; border-left:4px solid ${schoolInfo.color};">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <div><strong>地区：</strong>${item.Area}</div>
+                        <div style="color:#666; font-size:12px;">热度：${item.Heat || 85}%</div>
+                    </div>
+                    <div><strong>技法：</strong>${techTags}</div>
+                </div>
+
+                <div style="margin:10px 0;">
+                    <div style="display:flex; align-items:center; margin-bottom:6px;">
+                        <strong style="margin-right:8px;">艺术评分：</strong>
+                        <div style="display:flex; align-items:center;">
+                            ${ratingStars}
+                            <span style="margin-left:8px; font-weight:bold; color:#e67e22;">${item.Rating || 4.5}</span>
+                        </div>
+                    </div>
+                    <div><strong>保护级别：</strong>${item.ProtectionLevel || "国家级非遗"}</div>
+                    <div><strong>传承状况：</strong>${item.InheritanceStatus || "良好传承"}</div>
+                </div>
+
+                <div style="margin:12px 0;">
+                    <strong>简介：</strong>
+                    <p style="color:#444; line-height:1.6; margin-top:6px; font-size:13px;">${item.Desc}</p>
+                </div>
+
+                <div style="margin-top:15px; border-top:1px solid #eee; padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="font-size:12px; color:#888;">
+                        <i class="fa fa-calendar"></i> 收录于：${item.RecordDate || "2023年"}
+                    </div>
+                    <div style="font-size:12px; color:#888;">
+                        <i class="fa fa-eye"></i> 浏览：${item.Views || 1256}次
+                    </div>
+                </div>
+
+                ${imgBtn}
+            </div>
+            `;
+        }
+
+        /**
+         * 根据流派获取图标和颜色信息
+         */
+        function getSchoolInfo(school) {
+            const schoolMap = {
+                "黔东南流派（最具影响力）": { name: "黔东南苗绣", icon: "fa-mountain", color: "#3498db" },
+                "湘西流派（融合湘绣风格）": { name: "湘西苗绣", icon: "fa-hills", color: "#e74c3c" },
+                "黔中流派": { name: "贵阳苗绣", icon: "fa-city", color: "#f39c12" },
+                "黔西北流派（古朴厚重）": { name: "黔西北苗绣", icon: "fa-tree", color: "#27ae60" },
+                "黔南流派（技法融合）": { name: "黔南苗绣", icon: "fa-leaf", color: "#9b59b6" },
+                "桂北流派（银饰结合）": { name: "桂北苗绣", icon: "fa-certificate", color: "#e67e22" },
+                "滇西流派（异族风情）": { name: "滇西苗绣", icon: "fa-compass", color: "#1abc9c" },
+                "鄂西流派（土家交融）": { name: "鄂西苗绣", icon: "fa-home", color: "#9b59b6" },
+                "海南流派（海岛风情）": { name: "海南苗绣", icon: "fa-sun-o", color: "#f1c40f" },
+                "滇南流派（异域色彩）": { name: "滇南苗绣", icon: "fa-globe", color: "#d35400" },
+                "川南流派（质朴简约）": { name: "川南苗绣", icon: "fa-tree", color: "#27ae60" },
+                "川渝流派（小众特色）": { name: "川渝苗绣", icon: "fa-map-pin", color: "#8e44ad" },
+                "滇东流派（简洁明快）": { name: "滇东苗绣", icon: "fa-flag", color: "#16a085" }
+            };
+
+            return schoolMap[school] || { name: school, icon: "fa-flag", color: "#2c5282" };
+        }
+
+        /**
+         * 根据流派获取标记颜色
+         */
+        function getMarkerColorBySchool(school) {
+            const colorMap = {
+                "黔东南流派（最具影响力）": "#3498db",
+                "湘西流派（融合湘绣风格）": "#e74c3c",
+                "黔中流派": "#f39c12",
+                "黔西北流派（古朴厚重）": "#27ae60",
+                "黔南流派（技法融合）": "#9b59b6",
+                "桂北流派（银饰结合）": "#e67e22",
+                "滇西流派（异族风情）": "#1abc9c",
+                "鄂西流派（土家交融）": "#9b59b6",
+                "海南流派（海岛风情）": "#f1c40f",
+                "滇南流派（异域色彩）": "#d35400",
+                "川南流派（质朴简约）": "#27ae60",
+                "川渝流派（小众特色）": "#8e44ad",
+                "滇东流派（简洁明快）": "#16a085"
+            };
+
+            return colorMap[school] || "#2c5282";
+        }
+
+        /**
+         * 生成星级评分HTML
+         */
+        function getRatingStars(rating, simple = false) {
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5;
+            let stars = "";
+
+            for (let i = 1; i <= 5; i++) {
+                if (i <= fullStars) {
+                    stars += '<i class="fa fa-star" style="color:#ffd700; margin-right:2px;"></i>';
+                } else if (i === fullStars + 1 && halfStar) {
+                    stars += '<i class="fa fa-star-half-o" style="color:#ffd700; margin-right:2px;"></i>';
+                } else {
+                    stars += '<i class="fa fa-star-o" style="color:#ddd; margin-right:2px;"></i>';
+                }
+            }
+
+            if (simple) {
+                return stars;
+            }
+
+            return stars;
+        }
+
+        /**
+         * 隐藏苗绣分布
+         */
+        function hideDistribution() {
+            distributionMarkers.forEach(marker => map.removeLayer(marker));
+            distributionMarkers = [];
+            isDistributionActive = false;
+            $("#distributionBtn").removeClass("active");
+        }
+
+        /**
+         * 显示搜索结果
+         */
+        function showSearchResults(filteredData) {
+            // 清除之前的搜索结果
+            clearSearchResults();
+
+            if (filteredData.length > 0) {
+                filteredData.forEach(item => {
+                    const marker = L.marker([item.Lat, item.Lng], {
+                        icon: createCustomIcon('#f39c12')
+                    })
+                    .addTo(map)
+                    .bindPopup(createEnhancedMiaoxiuPopupContent(item));
+
+                    distributionMarkers.push(marker);
+                });
+
+                const bounds = L.latLngBounds(filteredData.map(item => [item.Lat, item.Lng]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        /**
+         * 清除搜索结果
+         */
+        function clearSearchResults() {
+            // 只清除搜索结果标记，保留其他功能标记
+            distributionMarkers.forEach(marker => map.removeLayer(marker));
+            distributionMarkers = [];
+        }
+
+        /**
+         * 显示热力图 - 优化版（可以与其他功能叠加）
+         */
+        function showHeatmap() {
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
+
+            // 生成热力图数据
+            const heatmapData = generateHeatmapData();
+            if (heatmapData.length === 0) {
+                alert("暂无数据生成热力图");
+                return;
+            }
+
+            // 创建热力图 - 使用更明显的参数
+            heatmapLayer = L.heatLayer(heatmapData, {
+                radius: 35, // 增大半径
+                blur: 25, // 增大模糊度
+                maxZoom: 17,
+                minOpacity: 0.4, // 降低不透明度以便看到底层标记
+                max: 3.0, // 提高最大强度值
+                gradient: {
+                    0.1: '#00ff00', // 绿色
+                    0.3: '#ffff00', // 黄色
+                    0.5: '#ffa500', // 橙色
+                    0.7: '#ff4500', // 橙红色
+                    0.9: '#ff0000' // 红色
+                }
+            }).addTo(map);
+
+            isHeatmapActive = true;
+            $("#heatmapBtn").addClass("active");
+
+            // 显示图例
+            $("#heatmapLegend").show();
+
+            // 如果这是第一个激活的功能，调整地图视野
+            if (!isOriginActive && !isDistributionActive) {
+                const bounds = L.latLngBounds(heatmapData.map(point => [point[0], point[1]]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        /**
+         * 隐藏热力图
+         */
+        function hideHeatmap() {
+            if (heatmapLayer) {
+                map.removeLayer(heatmapLayer);
+                heatmapLayer = null;
+            }
+
+            isHeatmapActive = false;
+            $("#heatmapBtn").removeClass("active");
+
+            // 隐藏图例
+            $("#heatmapLegend").hide();
+        }
+
+        /**
+         * 生成热力图数据 - 优化版（更强的热点效果）
+         */
+        function generateHeatmapData() {
+            const heatmapData = [];
+
+            // 添加苗绣分布数据点 - 增强权重
+            miaoxiuData.forEach(item => {
+                // 主要数据点 - 增强权重
+                heatmapData.push([item.Lat, item.Lng, 2.5]);
+
+                // 在周围添加更多随机点以形成更明显的热点区域
+                for (let i = 0; i < 8; i++) {
+                    const lat = item.Lat + (Math.random() - 0.5) * 0.08; // 缩小随机范围
+                    const lng = item.Lng + (Math.random() - 0.5) * 0.08;
+                    const intensity = 0.8 + Math.random() * 0.7; // 增强随机点强度
+                    heatmapData.push([lat, lng, intensity]);
+                }
+            });
+
+            // 添加起源数据点 - 增强权重
+            originData.forEach(item => {
+                heatmapData.push([item.lat, item.lng, 2.0]);
+
+                // 在周围添加随机点
+                for (let i = 0; i < 6; i++) {
+                    const lat = item.lat + (Math.random() - 0.5) * 0.06;
+                    const lng = item.lng + (Math.random() - 0.5) * 0.06;
+                    const intensity = 0.6 + Math.random() * 0.6;
+                    heatmapData.push([lat, lng, intensity]);
+                }
+            });
+
+            // 添加贵州省主要苗绣文化热点区域 - 显著增强热点效果
+            const guizhouHotspots = [
+                [26.58, 106.71, 3.0], // 贵阳 - 最大热点
+                [26.27, 107.52, 2.8], // 凯里 - 黔东南苗绣中心
+                [27.73, 108.19, 2.2], // 铜仁
+                [26.85, 104.28, 2.0], // 毕节
+                [27.70, 106.93, 1.8], // 遵义
+                [26.03, 107.92, 2.5], // 都匀
+                [27.01, 105.78, 1.8], // 安顺
+                [26.57, 107.98, 2.6], // 黔东南地区
+                [27.31, 103.72, 1.5], // 威宁
+                [25.09, 104.90, 1.7], // 兴义
+            ];
+
+            guizhouHotspots.forEach(point => {
+                heatmapData.push(point);
+
+                // 在周围添加密集的随机点，形成更明显的热点
+                const pointsCount = Math.floor(point[2] * 10); // 根据强度生成不同数量的点
+                for (let i = 0; i < pointsCount; i++) {
+                    const lat = point[0] + (Math.random() - 0.5) * 0.12;
+                    const lng = point[1] + (Math.random() - 0.5) * 0.12;
+                    const intensity = point[2] * (0.4 + Math.random() * 0.4);
+                    heatmapData.push([lat, lng, intensity]);
+                }
+            });
+
+            // 添加湖南省苗绣热点区域
+            const hunanHotspots = [
+                [27.73, 110.3, 2.5], // 凤凰县
+                [28.32, 109.73, 2.0], // 花垣县
+                [28.70, 109.65, 1.8], // 保靖县
+                [27.44, 110.0, 1.7], // 麻阳县
+            ];
+
+            hunanHotspots.forEach(point => {
+                heatmapData.push(point);
+                for (let i = 0; i < 6; i++) {
+                    const lat = point[0] + (Math.random() - 0.5) * 0.1;
+                    const lng = point[1] + (Math.random() - 0.5) * 0.1;
+                    const intensity = point[2] * (0.3 + Math.random() * 0.3);
+                    heatmapData.push([lat, lng, intensity]);
+                }
+            });
+
+            // 添加云南省苗绣热点区域
+            const yunnanHotspots = [
+                [23.36, 103.15, 1.5], // 文山
+                [24.35, 102.54, 1.3], // 玉溪
+                [25.05, 102.71, 1.4], // 昆明周边
+            ];
+
+            yunnanHotspots.forEach(point => {
+                heatmapData.push(point);
+                for (let i = 0; i < 4; i++) {
+                    const lat = point[0] + (Math.random() - 0.5) * 0.15;
+                    const lng = point[1] + (Math.random() - 0.5) * 0.15;
+                    const intensity = point[2] * (0.2 + Math.random() * 0.3);
+                    heatmapData.push([lat, lng, intensity]);
+                }
+            });
+
+            // 添加广西省苗绣热点区域
+            const guangxiHotspots = [
+                [25.79, 109.77, 1.6], // 融水
+                [24.70, 108.09, 1.2], // 河池
+            ];
+
+            guangxiHotspots.forEach(point => {
+                heatmapData.push(point);
+                for (let i = 0; i < 3; i++) {
+                    const lat = point[0] + (Math.random() - 0.5) * 0.15;
+                    const lng = point[1] + (Math.random() - 0.5) * 0.15;
+                    const intensity = point[2] * (0.2 + Math.random() * 0.3);
+                    heatmapData.push([lat, lng, intensity]);
+                }
+            });
+
+            console.log(`生成热力图数据点数量: ${heatmapData.length}`);
+            return heatmapData;
+        }
+
+        /**
+         * 绑定动画展示事件
+         */
+        function bindAnimationEvents() {
+            // 动画展示按钮
+            $("#animateBtn").click(function () {
+                if (isAnimationRunning) {
+                    stopAnimation();
+                    $(this).removeClass("active");
+                    return;
+                }
+
+                startAnimation();
+                $(this).addClass("active");
+            });
+
+            // 暂停按钮
+            $("#pauseBtn").click(function () {
+                if (isAnimationRunning && !isAnimationPaused) {
+                    pauseAnimation();
+                }
+            });
+
+            // 继续按钮
+            $("#resumeBtn").click(function () {
+                if (isAnimationRunning && isAnimationPaused) {
+                    resumeAnimation();
+                }
+            });
+
+            // 停止按钮
+            $("#stopBtn").click(function () {
+                stopAnimation();
+                $("#animateBtn").removeClass("active");
+            });
+
+            // 关闭动画信息面板
+            $("#closeAnimationInfo").click(function () {
+                stopAnimation();
+                $("#animateBtn").removeClass("active");
+            });
+        }
+
+        /**
+         * 开始动画展示
+         */
+        function startAnimation() {
+            // 清除动画相关的标记（如果有）
+            stopAnimation();
+
+            isAnimationRunning = true;
+            isAnimationPaused = false;
+            currentAnimationIndex = 0;
+            animationProgress = 0;
+            currentSegmentProgress = 0;
+            totalSegments = originData.length - 1;
+
+            // 绘制所有时期标记点
+            originData.forEach((item, index) => {
+                const marker = L.marker([item.lat, item.lng], {
+                    icon: createCustomIcon('#3498db')
+                })
+                .addTo(map);
+
+                originMarkers.push(marker);
+            });
+
+            // 绘制所有线路
+            for (let i = 0; i < originData.length - 1; i++) {
+                const line = L.polyline(
+                    [[originData[i].lat, originData[i].lng], [originData[i + 1].lat, originData[i + 1].lng]],
+                    { color: '#3498db', weight: 2, opacity: 0.7 }
+                ).addTo(map);
+
+                originLines.push(line);
+            }
+
+            // 创建小车图标
+            carMarker = createCarIcon();
+
+            // 从第一个时期开始
+            updateAnimationInfo(originData[0]);
+
+            // 调整地图视野
+            const bounds = L.latLngBounds(originData.map(item => [item.lat, item.lng]));
+            map.fitBounds(bounds, { padding: [50, 50] });
+
+            // 显示动画信息面板
+            $("#animationInfoPanel").show();
+            $("#totalSteps").text(`共${originData.length}站`);
+            updateAnimationProgress();
+
+            // 更新按钮状态
+            $("#animateBtn").text("停止动画");
+            $("#pauseBtn").show();
+            $("#resumeBtn").hide();
+
+            // 开始移动到第一个时期的动画
+            moveToNextPeriod(0);
+        }
+
+        /**
+         * 停止动画
+         */
+        function stopAnimation() {
+            isAnimationRunning = false;
+            isAnimationPaused = false;
+
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+
+            // 清除动画相关的标记
+            originMarkers.forEach(marker => map.removeLayer(marker));
+            originLines.forEach(line => map.removeLayer(line));
+            if (carMarker) {
+                map.removeLayer(carMarker);
+                carMarker = null;
+            }
+
+            originMarkers = [];
+            originLines = [];
+
+            // 隐藏动画信息面板
+            $("#animationInfoPanel").hide();
+
+            // 更新按钮状态
+            $("#animateBtn").text("动画展示");
+        }
+
+        /**
+         * 暂停动画
+         */
+        function pauseAnimation() {
+            isAnimationPaused = true;
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+
+            // 更新按钮状态
+            $("#pauseBtn").hide();
+            $("#resumeBtn").show();
+        }
+
+        /**
+         * 继续动画
+         */
+        function resumeAnimation() {
+            isAnimationPaused = false;
+
+            // 更新按钮状态
+            $("#pauseBtn").show();
+            $("#resumeBtn").hide();
+
+            // 继续移动到下一个时期
+            moveToNextPeriod(currentAnimationIndex);
+        }
+
+        /**
+         * 移动到下一个时期 - 修复版
+         */
+        function moveToNextPeriod(startIndex) {
+            if (!isAnimationRunning || isAnimationPaused || startIndex >= originData.length) return;
+
+            // 如果已经是最后一个时期，直接展示信息，不移动小车
+            if (startIndex >= originData.length - 1) {
+                // 更新为最后一个时期的信息
+                updateAnimationInfo(originData[originData.length - 1]);
+                updateAnimationProgress();
+
+                // 如果小车存在，移动到最后一个位置
+                if (carMarker) {
+                    const lastData = originData[originData.length - 1];
+                    carMarker.setLatLng([lastData.lat, lastData.lng]);
+                }
+
+                // 更新进度条为100%
+                $("#progressFill").css("width", "100%");
+                $("#currentStep").text(`第${originData.length}站`);
+
+                // 3秒后自动停止动画
+                setTimeout(() => {
+                    stopAnimation();
+                    $("#animateBtn").removeClass("active");
+                }, 3000);
+                return;
+            }
+
+            const currentData = originData[startIndex];
+            const nextData = originData[startIndex + 1];
+
+            // 设置移动动画
+            currentSegmentProgress = 0;
+            const totalFrames = 100; // 总帧数
+            const duration = 3000; // 动画持续时间3秒
+            const intervalTime = duration / totalFrames;
+
+            animationInterval = setInterval(() => {
+                if (!isAnimationRunning || isAnimationPaused) {
+                    clearInterval(animationInterval);
+                    return;
+                }
+
+                currentSegmentProgress++;
+
+                const lat = currentData.lat + (nextData.lat - currentData.lat) * (currentSegmentProgress / totalFrames);
+                const lng = currentData.lng + (nextData.lng - currentData.lng) * (currentSegmentProgress / totalFrames);
+
+                if (carMarker) {
+                    carMarker.setLatLng([lat, lng]);
+                }
+
+                // 更新总进度
+                animationProgress = (startIndex + currentSegmentProgress / totalFrames) / (originData.length - 1);
+                $("#progressFill").css("width", `${animationProgress * 100}%`);
+
+                if (currentSegmentProgress >= totalFrames) {
+                    clearInterval(animationInterval);
+                    currentAnimationIndex = startIndex + 1;
+                    updateAnimationInfo(nextData);
+                    updateAnimationProgress();
+
+                    if (isAnimationRunning && !isAnimationPaused) {
+                        // 继续移动到下一个时期
+                        moveToNextPeriod(currentAnimationIndex);
+                    }
+                }
+            }, intervalTime);
+        }
+
+        /**
+         * 更新动画信息面板
+         */
+        function updateAnimationInfo(data) {
+            $("#animationPeriod").text(data.period);
+            $("#animationArea").text(data.area);
+            $("#animationDesc").text(data.desc);
+            $("#animationImg").attr("src", data.photo);
+            $("#currentStep").text(`第${originData.findIndex(item => item.period === data.period) + 1}站`);
+        }
+
+        /**
+         * 更新动画进度
+         */
+        function updateAnimationProgress() {
+            const progress = currentAnimationIndex / (originData.length - 1);
+            $("#progressFill").css("width", `${progress * 100}%`);
+        }
+
+        /**
+         * 创建小车图标
+         */
+        function createCarIcon() {
+            return L.marker([originData[0].lat, originData[0].lng], {
+                icon: L.divIcon({
+                    className: 'car-icon',
+                    html: `<div style="
+                        background: linear-gradient(135deg, #e74c3c, #c0392b);
+                        color: white;
+                        border-radius: 50%;
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+                        border: 3px solid white;
+                        position: relative;
+                        animation: carMove 1s infinite alternate;
+                    ">
+                        <i class="fa fa-car" style="font-size: 22px; color: white;"></i>
+                    </div>`,
+                    iconSize: [48, 48],
+                    iconAnchor: [24, 24]
+                })
+            }).addTo(map);
+        }
+
+        /**
+         * 绑定图片弹窗事件
+         */
+        function bindImageModalEvents() {
+            // 关闭弹窗
+            $(document).on("click", ".close-modal, .image-modal", function (e) {
+                if (e.target === this) {
+                    $("#imageModal").hide();
+                }
+            });
+
+            // 上一张图片
+            $(document).on("click", ".img-prev", () => {
+                currentImgIndex = (currentImgIndex - 1 + currentMiaoxiuImages.length) % currentMiaoxiuImages.length;
+                showMiaoxiuImages(currentImgIndex);
+            });
+
+            // 下一张图片
+            $(document).on("click", ".img-next", () => {
+                currentImgIndex = (currentImgIndex + 1) % currentMiaoxiuImages.length;
+                showMiaoxiuImages(currentImgIndex);
+            });
+
+            // 打开图片弹窗
+            $(document).on("click", ".show-img-btn", function (e) {
+                e.stopPropagation();
+                if (currentMiaoxiuImages.length === 0) {
+                    alert("暂无图片可查看");
+                    return;
+                }
+                currentImgIndex = 0;
+                showMiaoxiuImages(currentImgIndex);
+            });
+        }
+
+        /**
+         * 显示苗绣图片
+         */
+        function showMiaoxiuImages(index) {
+            if (!currentMiaoxiuImages.length) return;
+            $("#currentImg").attr("src", currentMiaoxiuImages[index]);
+            $("#imageModal").css("display", "flex");
+        }
+
+        /**
+         * 创建自定义地图标记
+         */
+        function createCustomIcon(color) {
+            return L.divIcon({
+                className: 'custom-map-marker',
+                html: `<div style="
+                    background-color: ${color};
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    transition: all 0.2s ease;
+                    position: relative;
+                ">
+                    <div style="
+                        width: 12px;
+                        height: 12px;
+                        background: white;
+                        border-radius: 50%;
+                        opacity: 0.9;
+                    "></div>
+                </div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+        }
+
+        /**
+         * 创建苗绣弹窗内容
+         */
+        function createMiaoxiuPopupContent(item) {
+            const imgBtn = item.Images && item.Images.length > 0
+                ? `<button class="show-img-btn">查看图片</button>`
+                : "";
+
+            return `
+            <div style="width:250px; font-size:14px;">
+                <h3 style="color:#2c5282; margin:0 0 8px 0;">${item.Name}</h3>
+                <p style="margin:4px 0;"><strong>地区：</strong>${item.Area}</p>
+                <p style="margin:4px 0;"><strong>流派：</strong>${item.School}</p>
+                <p style="margin:4px 0;"><strong>技法：</strong>${item.Tech}</p>
+                <p style="margin:4px 0;"><strong>简介：</strong>${item.Desc}</p>
+                ${imgBtn}
+            </div>
+            `;
+        }
+
+        /**
+         * 绑定新增页面按钮点击事件
+         */
+        function bindNewPageEvents() {
+            // 苗绣流派详情页跳转
+            $("#schoolBtn").click(function () {
+                window.location.href = "school.html";
+            });
+
+            // 图案文化释义页跳转
+            $("#patternBtn").click(function () {
+                window.location.href = "pattern.html";
+            });
+
+            // 非遗传承人故事页跳转
+            $("#inheritorBtn").click(function () {
+                window.location.href = "inheritor.html";
+            });
+
+            // 数字展厅页跳转
+            $("#exhibitionBtn").click(function () {
+                window.location.href = "exhibition.html";
+            });
+
+            // 云体验苗绣页跳转
+            $("#cloudExperienceBtn").click(function () {
+                window.location.href = "cloud-experience.html";
+            });
+
+            // 苗绣答题页跳转
+            $("#quizBtn").click(function () {
+                window.location.href = "miaoxiu-quiz.html";
+            });
+        }
+
+        /**
+         * 解析URL定位参数
+         */
+        function parseLocateParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isLocate = urlParams.get("locate");
+            const lat = urlParams.get("lat");
+            const lng = urlParams.get("lng");
+            const name = urlParams.get("name");
+
+            if (isLocate === "true" && lat && lng && name) {
+                map.setView([lat, lng], 12);
+
+                const locateIcon = L.divIcon({
+                    className: "custom-locate-icon",
+                    html: `<div style="
+                        background: linear-gradient(135deg, #e74c3c, #c0392b);
+                        color: white;
+                        border-radius: 50%;
+                        width: 44px;
+                        height: 44px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        box-shadow: 0 0 20px rgba(231,76,60,0.6);
+                        border: 3px solid white;
+                        position: relative;
+                        z-index: 1000;
+                    ">
+                        <i class="fa fa-map-marker" style="font-size: 20px;"></i>
+                    </div>`,
+                    iconSize: [44, 44],
+                    iconAnchor: [22, 22]
+                });
+
+                const locateMarker = L.marker([lat, lng], {
+                    icon: locateIcon
+                }).addTo(map);
+
+                const popupContent = `<div style="width: 220px; text-align: center;">
+                    <h3 style="color: #2c5282; margin: 0 0 10px 0;">${decodeURIComponent(name)}</h3>
+                    <p style="margin: 0; font-size: 14px; color: #666;">经纬度：${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}</p>
+                    <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">点击地图其他位置关闭此标记</p>
+                </div>`;
+
+                locateMarker.bindPopup(popupContent).openPopup();
+
+                map.once('click', function () {
+                    map.removeLayer(locateMarker);
+                });
+
+                // 添加小车动画样式
+                $("<style>").text(`
+                    @keyframes carMove {
+                        0% { transform: translateY(0px) scale(1); }
+                        100% { transform: translateY(-3px) scale(1.05); }
+                    }
+                    .car-icon div {
+                        animation: carMove 1s infinite alternate;
+                    }
+                `).appendTo("head");
+            }
+        }
+    </script>
 </body>
 </html>
